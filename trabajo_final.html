@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Juego de Criterios de Divisibilidad</title>
+  <style>
+.number, .option-btn, #randomNumber { color: #ff7fbf; }
+    body {
+      font-family: 'Comic Sans MS', sans-serif;
+      background-color: #ffd6f2;
+      text-align: center;
+      padding-top: 40px;
+    }
+    h1 {
+      color: #333;
+      animation: aparecer 1s ease;
+    }
+    @keyframes aparecer {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    #numero {
+      font-size: 60px;
+      color: #ff7fbf;
+      margin: 20px 0;
+      font-weight: bold;
+      animation: zoom 0.5s ease;
+    }
+      margin: 20px 0;
+      font-weight: bold;
+      animation: zoom 0.5s ease;
+    }
+    @keyframes zoom {
+      from { transform: scale(0.5); }
+      to { transform: scale(1); }
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 70px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    button {
+      background-color: #ffb3d9;
+      border: 2px solid #ff5fa2;
+      font-size: 24px;
+      color: #ff2f92;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background-color: #007acc;
+      color: white;
+    }
+    #mensaje {
+      font-size: 22px;
+      margin-top: 25px;
+      font-weight: bold;
+      min-height: 40px;
+    }
+    #volverJugar {
+      display: none;
+      margin-top: 25px;
+      padding: 12px 20px;
+      font-size: 20px;
+      border-radius: 12px;
+      border: 2px solid #28a745;
+      background-color: #ffd6e8;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #volverJugar:hover {
+      background-color: #28a745;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div id="selectorNiveles" style="margin-top:20px;">
+    <h2>Elige la dificultad</h2>
+    <button onclick="seleccionarNivel(0)">Fácil</button>
+    <button onclick="seleccionarNivel(1)">Medio</button>
+    <button onclick="seleccionarNivel(2)">Difícil</button>
+  </div>
+
+  <div id="juego" style="display:none;">
+  <h1>🎯 Juego de Criterios de Divisibilidad</h1>
+  <p>Vidas: <span id="vidas">5</span> | Nivel: <span id="nivel">Fácil</span> | Ronda: <span id="ronda">1</span> / 6</p>
+  <h2 id="numero"></h2>
+  <div class="buttons" id="botones"></div>
+  <p id="mensaje"></p>
+  <button onclick="reiniciarJuego()">🔁 Reiniciar</button>
+  <button id="volverJugar" onclick="reiniciarJuego()">🔄 Jugar de nuevo</button>
+
+  <script>
+
+function restartGame() {
+  document.getElementById('question').style.display = 'block';
+  document.getElementById('buttons').style.display = 'block';
+  document.getElementById('endScreen').style.display = 'none';
+  generateQuestion();
+}
+
+    const niveles = [
+      { nombre: 'Fácil', min: 10, max: 99 },      // 2 cifras
+      { nombre: 'Medio', min: 100, max: 999 },    // 3 cifras
+      { nombre: 'Difícil', min: 1000, max: 9999 } // 4 cifras
+    ];
+
+    let nivelActual = 0;
+    let rondaActual = 1;
+    let vidas = 5;
+    let pistaDada = false;
+    let numeroActual = 0;
+
+    function numeroAleatorio(min, max) {
+      let n;
+      do {
+        n = Math.floor(Math.random() * (max - min + 1)) + min;
+      } while (![2,3,4,5,6,8,9,10].some(d => n % d === 0));
+      return n;
+    }
+
+    function esDivisible(num, divisor) {
+      return num % divisor === 0;
+    }
+
+    function animacionMensaje(color) {
+      const msg = document.getElementById('mensaje');
+      msg.style.transition = '0.3s';
+      msg.style.transform = 'scale(1.2)';
+      msg.style.color = color;
+      setTimeout(() => msg.style.transform = 'scale(1)', 200);
+    }
+
+    function mostrarNumero() {
+      const nivel = niveles[nivelActual];
+      numeroActual = numeroAleatorio(nivel.min, nivel.max);
+      document.getElementById('numero').textContent = numeroActual;
+      document.getElementById('mensaje').textContent = '';
+      document.getElementById('nivel').textContent = nivel.nombre;
+      document.getElementById('ronda').textContent = rondaActual;
+    }
+
+    function crearBotones() {
+      const contenedor = document.getElementById('botones');
+      contenedor.innerHTML = '';
+      for (let i = 2; i <= 10; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.onclick = () => verificarRespuesta(i, btn);
+        contenedor.appendChild(btn);
+      }
+    }
+
+    function verificarRespuesta(divisor, boton) {
+      const mensaje = document.getElementById('mensaje');
+
+      if (esDivisible(numeroActual, divisor)) {
+        mensaje.textContent = '✅ ¡CORRECTO!';
+        animacionMensaje('green');
+        
+        setTimeout(() => siguienteRonda(), 900);
+      } else {
+        
+
+        if (!pistaDada) {
+          mensaje.textContent = '❌ INCORRECTO, te doy una pista...';
+          animacionMensaje('orange');
+          pistaDada = true;
+          setTimeout(() => mostrarPista(divisor), 1400);
+        } else {
+          vidas--;
+          document.getElementById('vidas').textContent = vidas;
+          mensaje.textContent = '❌ INCORRECTO otra vez.';
+          animacionMensaje('red');
+          pistaDada = false;
+          if (vidas <= 0) {
+            setTimeout(finDelJuego, 1500);
+          }
+        }
+      }
+    }
+
+    function mostrarPista(divisor) {
+      const mensaje = document.getElementById('mensaje');
+      let pista = '';
+      if (divisor === 2) pista = '💡 Pista: No es divisible por 2 si no es par.';
+      else if (divisor === 3) pista = '💡 Pista: La suma de sus cifras no es múltiplo de 3.';
+      else if (divisor === 4) pista = '💡 Pista: Mira los dos últimos dígitos.';
+      else if (divisor === 5) pista = '💡 Pista: No termina en 0 ni 5.';
+      else if (divisor === 6) pista = '💡 Pista: Debe ser par y múltiplo de 3.';
+      else if (divisor === 8) pista = '💡 Pista: Mira los últimos tres dígitos.';
+      else if (divisor === 9) pista = '💡 Pista: La suma de las cifras no es múltiplo de 9.';
+      else if (divisor === 10) pista = '💡 Pista: No termina en 0.';
+      mensaje.textContent = pista;
+      mensaje.style.color = 'blue';
+    }
+
+    function siguienteRonda() {
+      if (rondaActual < 6) {
+        rondaActual++;
+      } else {
+        if (nivelActual < niveles.length - 1) {
+          alert(`🎉 ¡Pasaste el nivel ${niveles[nivelActual].nombre}!`);
+          nivelActual++;
+          rondaActual = 1;
+        } else {
+          document.getElementById('mensaje').textContent = '🏆 ¡GANASTE EL JUEGO COMPLETO!';
+          document.getElementById('volverJugar').style.display = 'inline-block';
+          document.getElementById('botones').innerHTML = '';
+          return;
+        }
+      }
+      mostrarNumero();
+    }
+
+    function finDelJuego() {
+      document.getElementById('mensaje').textContent = '😢 Te quedaste sin vidas.';
+      document.getElementById('volverJugar').style.display = 'inline-block';
+      document.getElementById('botones').innerHTML = '';
+    }
+
+    function seleccionarNivel(nivel){
+      nivelActual = nivel;
+      rondaActual = 1;
+      vidas = 5;
+      pistaDada = false;
+      document.getElementById('selectorNiveles').style.display = 'none';
+      document.getElementById('juego').style.display = 'block';
+      document.getElementById('volverJugar').style.display = 'none';
+      document.getElementById('vidas').textContent = vidas;
+      crearBotones();
+      mostrarNumero();
+    }
+
+    function reiniciarJuego() {
+      nivelActual = 0;
+      rondaActual = 1;
+      vidas = 5;
+      pistaDada = false;
+      document.getElementById('volverJugar').style.display = 'none';
+      document.getElementById('vidas').textContent = vidas;
+      crearBotones();
+      mostrarNumero();
+    }
+
+    crearBotones();
+    mostrarNumero();
+  </script>
+  <div id="endScreen" style="display:none; margin-top:20px;">
+    <h2>¡Juego terminado!</h2>
+    <button onclick="restartGame()">Jugar de nuevo</button>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Divisores</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', sans-serif;
+      background-color: #ffd6f2; /* Rosa suave */
+      text-align: center;
+      padding-top: 20px;
+      color: #333;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Contenedor principal para empujar el footer */
+    .main-content {
+      flex: 1;
+    }
+
+    h1 {
+      color: #d63384;
+      animation: aparecer 1s ease;
+    }
+    
+    @keyframes aparecer {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    #numero {
+      font-size: 70px;
+      color: #ff7fbf;
+      margin: 20px 0;
+      font-weight: bold;
+      text-shadow: 2px 2px 0px #fff;
+      animation: zoom 0.5s ease;
+    }
+    
+    @keyframes zoom {
+      from { transform: scale(0.5); }
+      to { transform: scale(1); }
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn {
+      padding: 15px 25px;
+      font-size: 24px;
+      background-color: #ffadd6;
+      border: 3px solid #ff7fbf;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+      color: white;
+      font-weight: bold;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: scale(1.1);
+      background-color: #ff7fbf;
+    }
+
+    /* Estilo para botón desactivado (ya usado) */
+    .btn:disabled {
+      background-color: #ccc;
+      border-color: #999;
+      color: #666;
+      cursor: not-allowed;
+      transform: scale(0.95);
+      opacity: 0.6;
+    }
+
+    #mensaje {
+      font-size: 24px;
+      height: 30px;
+      margin: 15px;
+      font-weight: bold;
+    }
+
+    #vidas, #ronda {
+      font-size: 20px;
+      color: #d63384;
+      margin: 5px;
+    }
+
+    #selectorNiveles button, #volverJugar {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #66d9ef;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 5px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 4px 0 #00b4d8;
+    }
+
+    #selectorNiveles button:hover, #volverJugar:hover {
+      background-color: #4dd0e1;
+      transform: translateY(-2px);
+    }
+
+    /* Footer estilo */
+    #footer {
+      background-color: rgba(255, 255, 255, 0.5);
+      color: #d63384;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: auto; /* Se pega al fondo */
+      border-top: 2px solid #ffadd6;
+    }
+  </style>
+</head>
+<body>
+
+<div class="main-content">
+  <h1>🌸 Criterios de Divisibilidad 🌸</h1>
+
+  <div id="selectorNiveles">
+    <p>Selecciona un nivel para comenzar:</p>
+    <button onclick="seleccionarNivel(1)">Nivel 1 (2 cifras)</button>
+    <button onclick="seleccionarNivel(2)">Nivel 2 (3 cifras)</button>
+    <button onclick="seleccionarNivel(3)">Nivel 3 (4 cifras)</button>
+  </div>
+
+  <div id="juego" style="display:none;">
+    <div id="ronda">Ronda: <span id="numRonda">1</span></div>
+    <div id="vidas">Vidas: 5</div>
+    
+    <div id="numero">0</div>
+    
+    <div class="buttons" id="botones">
+      </div>
+    
+    <div id="mensaje"></div>
+    <br>
+    <button id="volverJugar" style="display:none;" onclick="reiniciarJuego()">🔄 Volver a Jugar</button>
+  </div>
+</div>
+
+<div id="footer">Hecho por Alys, Estrella y Janna de 6° grado de La Japón | 2025</div>
+
+<script>
+  let nivelActual = 0;
+  let rondaActual = 1;
+  let vidas = 5;
+  
+  // Lista fija de divisores disponibles en el juego
+  const divisoresBase = [2, 3, 4, 5, 6, 9, 10];
+  
+  // Sonidos (opcionales, usando URLs genéricas cortas)
+  const sndCorrect = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+  const sndError = new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
+  const sndWin = new Audio('https://actions.google.com/sounds/v1/cartoon/magic_chime.ogg');
+
+  function seleccionarNivel(nivel) {
+    nivelActual = nivel;
+    rondaActual = 1;
+    vidas = 5;
+    document.getElementById('selectorNiveles').style.display = 'none';
+    document.getElementById('juego').style.display = 'block';
+    document.getElementById('volverJugar').style.display = 'none';
+    actualizarUI();
+    crearBotones();
+    generarNumeroValido();
+  }
+
+  function crearBotones() {
+    const contenedor = document.getElementById('botones');
+    contenedor.innerHTML = '';
+    divisoresBase.forEach(num => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.textContent = num;
+      btn.id = 'btn-' + num; // ID único para poder desactivarlo
+      btn.onclick = () => verificarDivisibilidad(num);
+      contenedor.appendChild(btn);
+    });
+  }
+
+  // --- LÓGICA INTELIGENTE NUEVA ---
+  function generarNumeroValido() {
+    const elementoNumero = document.getElementById('numero');
+    
+    // 1. Identificar qué botones siguen activos
+    const activos = divisoresBase.filter(d => !document.getElementById('btn-' + d).disabled);
+
+    // Si no queda ninguno activo, el nivel se completó (esto se maneja en verificar, pero por seguridad:)
+    if (activos.length === 0) {
+      nivelCompletado();
+      return;
+    }
+
+    let numeroGenerado = 0;
+    let esValido = false;
+
+    // 2. Generar números hasta encontrar uno que sirva para AL MENOS UNO de los botones activos
+    // Esto evita que salga un número que no puedas dividir con lo que te queda.
+    while (!esValido) {
+      let min, max;
+      if (nivelActual === 1) { min = 10; max = 99; }
+      else if (nivelActual === 2) { min = 100; max = 999; }
+      else { min = 1000; max = 9999; }
+      
+      numeroGenerado = Math.floor(Math.random() * (max - min + 1)) + min;
+
+      // Revisamos si el número es divisible por alguno de los botones disponibles
+      for (let divisor of activos) {
+        if (numeroGenerado % divisor === 0) {
+          esValido = true;
+          break; // Encontramos al menos un divisor posible, el número sirve
+        }
+      }
+    }
+
+    // Animación y mostrar
+    elementoNumero.style.animation = 'none';
+    elementoNumero.offsetHeight; /* trigger reflow */
+    elementoNumero.style.animation = 'zoom 0.5s ease';
+    elementoNumero.textContent = numeroGenerado;
+  }
+
+  function verificarDivisibilidad(divisorElegido) {
+    const numero = parseInt(document.getElementById('numero').textContent);
+    const mensaje = document.getElementById('mensaje');
+    const btn = document.getElementById('btn-' + divisorElegido);
+
+    if (numero % divisorElegido === 0) {
+      // ✅ CORRECTO
+      mensaje.textContent = `✅ ¡Muy bien! ${numero} es divisible por ${divisorElegido}`;
+      mensaje.style.color = "green";
+      sndCorrect.play();
+      
+      // DESACTIVAR EL BOTÓN USADO
+      btn.disabled = true;
+
+      // Verificar si quedan botones
+      const restantes = divisoresBase.filter(d => !document.getElementById('btn-' + d).disabled);
+      
+      if (restantes.length === 0) {
+        nivelCompletado();
+      } else {
+        // Siguiente ronda dentro del mismo nivel (borrando botones)
+        setTimeout(() => {
+            mensaje.textContent = "";
+            generarNumeroValido();
+        }, 1500);
+      }
+
+    } else {
+      // ❌ INCORRECTO
+      vidas--;
+      mensaje.textContent = `❌ ¡Ups! ${numero} NO es divisible por ${divisorElegido}`;
+      mensaje.style.color = "red";
+      sndError.play();
+      actualizarUI();
+
+      if (vidas <= 0) {
+        finDelJuego();
+      } else {
+        setTimeout(() => mensaje.textContent = "", 1500);
+      }
+    }
+  }
+
+  function nivelCompletado() {
+    sndWin.play();
+    document.getElementById('mensaje').innerHTML = "🎉 ¡NIVEL COMPLETADO! 🎉<br>Has usado todos los divisores.";
+    document.getElementById('numero').textContent = "🏆";
+    
+    // Reiniciamos los botones para la siguiente "vuelta" o subimos dificultad
+    // Aquí simplemente reactivamos todo para seguir jugando
+    setTimeout(() => {
+        alert("¡Felicitaciones! Has completado el tablero. Vamos otra vez.");
+        rondaActual++;
+        crearBotones(); // Reactiva todos
+        document.getElementById('mensaje').textContent = "";
+        generarNumeroValido();
+        actualizarUI();
+    }, 1000);
+  }
+
+  function finDelJuego() {
+    document.getElementById('juego').style.display = 'none';
+    document.getElementById('selectorNiveles').style.display = 'block';
+    alert("😢 Te quedaste sin vidas.");
+  }
+
+  function reiniciarJuego() {
+    location.reload();
+  }
+
+  function actualizarUI() {
+    document.getElementById('vidas').textContent = "Vidas: " + vidas;
+    document.getElementById('numRonda').textContent = rondaActual;
+  }
+
+</script>
+
+</body>
+</html>

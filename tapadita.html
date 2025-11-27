@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎯 La Tapadita 🎯</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%;overflow:hidden;font-family:"Segoe UI",sans-serif;background:linear-gradient(120deg,#0ea5a4,#0ea5a4 20%,#f97316 50%,#a78bfa 80%);background-size:400% 400%;animation:fondo 10s infinite alternate;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white}
+  @keyframes fondo{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+  h1{font-size:36px;color:#facc15;text-shadow:0 0 20px #fde047;margin-bottom:10px}
+
+  /* Ajustamos un poco el tamaño del grid para dar espacio al footer si la pantalla es chica */
+  #game{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;width:85vmin;height:85vmin}
+  
+  .cell{display:flex;align-items:center;justify-content:center;border-radius:8px;background:#111827;border:2px solid rgba(255,255,255,0.06);cursor:pointer;font-size:18px;font-weight:700;transition:0.12s;position:relative;overflow:visible}
+  .cell:hover{transform:scale(1.06);box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+  .tapped1{background:#1e40af;color:white;box-shadow:0 0 18px #60a5fa;transform:scale(1.08)}
+  .tapped2{background:#15803d;color:white;box-shadow:0 0 18px #4ade80;transform:scale(1.08)}
+  .fail{background:#7f1d1d!important;animation:failBlink .5s alternate 4}
+  @keyframes failBlink{from{opacity:1}to{opacity:.3}}
+
+  /* EXPLOSIÓN COMPLETA: base */
+  .explosion{
+    position:absolute;
+    pointer-events:none;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:10px; height:10px;
+  }
+
+  /* ONDAS DE CHOQUE (dos) */
+  .ring{
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%) scale(0);
+    border-radius:50%;
+    opacity:0.9;
+    box-shadow:0 0 30px rgba(255,255,255,0.6) inset;
+    animation:ringAnim 520ms cubic-bezier(.2,.8,.2,1) forwards;
+    mix-blend-mode:screen;
+  }
+  .ring.r2{ animation-duration:700ms; opacity:0.7; }
+
+  @keyframes ringAnim{
+    0%{ transform:translate(-50%,-50%) scale(0.12); opacity:1; filter:blur(0px) }
+    40%{ transform:translate(-50%,-50%) scale(1.0); opacity:0.9; filter:blur(6px) }
+    100%{ transform:translate(-50%,-50%) scale(2.8); opacity:0; filter:blur(14px) }
+  }
+
+  /* BOOM BRILLANTE (centro) */
+  .boomCore{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(0.3);
+    width:40%; height:40%; border-radius:50%;
+    mix-blend-mode:screen; filter:blur(3px) brightness(1.6);
+    animation:coreAnim 420ms ease-out forwards;
+    pointer-events:none;
+  }
+  @keyframes coreAnim{0%{opacity:1;transform:translate(-50%,-50%) scale(0.2)} 60%{transform:translate(-50%,-50%) scale(1.05);opacity:.95}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
+
+  /* LLAMAS (capas) */
+  .flame{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-10%);
+    width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;
+    animation:flameRise 700ms ease-out forwards;
+    opacity:0.95;filter:blur(2px);
+  }
+  .flame .f{position:absolute;left:50%;bottom:0;transform-origin:center bottom;border-radius:50% 50% 30% 30% / 60% 60% 40% 40%;opacity:.95}
+  .f1{width:36%;height:68%;transform:translateX(-50%) scaleY(1);animation:flicker1 420ms infinite}
+  .f2{width:24%;height:46%;transform:translateX(-50%) scaleY(.9;);animation:flicker2 380ms infinite;opacity:.9}
+  @keyframes flicker1{0%{transform:translateX(-50%) scaleY(1)}50%{transform:translateX(-50%) scaleY(0.86)}100%{transform:translateX(-50%) scaleY(1)}}
+  @keyframes flicker2{0%{transform:translateX(-50%) scaleY(.9)}50%{transform:translateX(-50%) scaleY(0.7)}100%{transform:translateX(-50%) scaleY(.9)}}
+  @keyframes flameRise{0%{opacity:1;transform:translate(-50%,-10%) scale(0.5)}50%{transform:translate(-50%,-6%) scale(0.95)}100%{opacity:0;transform:translate(-50%,-40%) scale(1.4)}}
+
+  /* HUMO */
+  .smoke{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-10%);
+    pointer-events:none; filter:blur(4px); opacity:0.9;
+  }
+  .smoke .s{position:absolute;width:18px;height:18px;border-radius:50%;opacity:.9;animation:smokeRise 1200ms ease-out forwards}
+  @keyframes smokeRise{
+    0%{transform:translateY(0) scale(0.6);opacity:.9}
+    50%{transform:translateY(-30px) scale(1);opacity:.6}
+    100%{transform:translateY(-90px) scale(1.8);opacity:0}
+  }
+
+  /* FRAGMENTOS GRANDES */
+  .shard{
+    position:absolute; width:10px;height:10px;border-radius:3px;pointer-events:none;
+    transform-origin:center center; animation:shardFly 900ms cubic-bezier(.2,.7,.2,1) forwards;
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+  }
+  @keyframes shardFly{
+    0%{transform:translate(0,0) rotate(0) scale(1);opacity:1}
+    100%{transform:translate(var(--tx),var(--ty)) rotate(var(--rot)) scale(.5);opacity:0}
+  }
+
+  /* CHISPAS PEQUEÑAS */
+  .spark{
+    position:absolute;width:4px;height:4px;border-radius:50%;pointer-events:none;filter:blur(.6px);
+    animation:sparkFly 520ms linear forwards;
+    box-shadow:0 0 8px rgba(255,255,255,0.9);
+  }
+  @keyframes sparkFly{
+    0%{transform:translate(0,0) scale(1);opacity:1}
+    100%{transform:translate(var(--sx),var(--sy)) scale(.3);opacity:0}
+  }
+
+  /* UI info */
+  #info,#vidas,#mensaje{margin-top:8px;font-size:20px;text-shadow:0 0 6px rgba(0,0,0,0.6)}
+  #boton{margin-top:12px;padding:10px 20px;border:none;border-radius:8px;font-weight:700;background:#facc15;cursor:pointer;box-shadow:0 0 12px #fbbf24;font-size:18px}
+
+  /* Footer estilo */
+  #footer {
+    margin-top: 15px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-family: "Segoe UI", sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: rgba(0,0,0,0.2);
+    padding: 5px 15px;
+    border-radius: 20px;
+  }
+
+  #finalMsg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);padding:28px;background:rgba(0,0,0,.75);border-radius:12px;font-size:30px;display:none;box-shadow:0 0 30px rgba(255,255,255,.08)}
+</style>
+</head>
+<body>
+<h1>🎯 La Tapadita 🎯</h1>
+<div id="game"></div>
+<div id="info">Turno: Jugador 1 (Azul)</div>
+<div id="vidas">Jugador 1 ❤️❤️❤️ | Jugador 2 ❤️❤️❤️</div>
+<div id="mensaje"></div>
+<button id="boton" onclick="reiniciar()">Reiniciar</button>
+
+<div id="footer">Hecho por Alexis y Lorena de 6° grado de La Japón</div>
+
+<div id="finalMsg"></div>
+
+<audio id="music" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_34b93cf9c8.mp3" type="audio/mpeg">
+</audio>
+<audio id="clickSound">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_dd5e177cc0.mp3" type="audio/mpeg">
+</audio>
+<audio id="explosionSound">
+  <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_550fa7d86c.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+  const game = document.getElementById('game');
+  const info = document.getElementById('info');
+  const vidasTxt = document.getElementById('vidas');
+  const mensaje = document.getElementById('mensaje');
+  const finalMsg = document.getElementById('finalMsg');
+  const clickSound = document.getElementById('clickSound');
+  const explosionSound = document.getElementById('explosionSound');
+  const music = document.getElementById('music');
+
+  let turno = 1;
+  let vidas = [3,3];
+  let ultimo = null;
+  let usados = new Set();
+
+  // Crear tablero 1..100
+  for(let i=1;i<=100;i++){
+    const c = document.createElement('div');
+    c.className='cell';
+    c.textContent=i;
+    c.onclick = ()=> jugar(i,c);
+    game.appendChild(c);
+  }
+
+  // Teclas música
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Enter') music.play();
+    if(e.key === ' ') music.pause();
+  });
+
+  // Función principal: cuando se toca un número
+  function jugar(n, celda){
+    if(usados.has(n)) return;
+    const valido = (ultimo === null) || (n % ultimo === 0) || (ultimo % n === 0);
+
+    if(valido){
+      usados.add(n);
+      celda.classList.add(turno===1 ? 'tapped1' : 'tapped2');
+
+      // ---- EXPLOSIÓN ULTRA REALISTA ----
+      crearExplosionRealista(celda, turno);
+
+      // Sonido
+      try { explosionSound.currentTime = 0; explosionSound.volume = 0.9; explosionSound.play(); }
+      catch(e){ /* si falla, OK */ }
+
+      // Click
+      try { clickSound.currentTime = 0; clickSound.volume = 0.7; clickSound.play(); }
+      catch(e){}
+
+      ultimo = n;
+      mensaje.textContent = '';
+
+      // Comprobar jugadas
+      if(!hayMov()){
+        mostrarFinal(`No hay más jugadas. ¡Gana Jugador ${turno}!`);
+        bloquear();
+        return;
+      }
+
+      turno = turno === 1 ? 2 : 1;
+      actualizarInfo();
+
+    } else {
+      celda.classList.add('fail');
+      mensaje.textContent = '❌ No es múltiplo ni divisor';
+      vidas[turno-1]--;
+      document.body.classList.add('shake');
+      setTimeout(()=> document.body.classList.remove('shake'), 400);
+      try { clickSound.currentTime = 0; clickSound.play(); } catch(e){}
+      if(vidas[turno-1] <= 0){
+        const otro = turno===1 ? 2 : 1;
+        mostrarFinal(`❌ ¡PERDISTE!<br>Ganó el Jugador ${otro}`);
+        bloquear();
+        return;
+      }
+      setTimeout(()=> celda.classList.remove('fail'), 800);
+      turno = turno === 1 ? 2 : 1;
+      actualizarInfo();
+    }
+  }
+
+  function hayMov(){
+    if(ultimo === null) return true;
+    for(let i=1;i<=100;i++){
+      if(!usados.has(i) && (i % ultimo === 0 || ultimo % i === 0)) return true;
+    }
+    return false;
+  }
+
+  function actualizarInfo(){
+    info.textContent = `Turno: Jugador ${turno} (${turno===1?'Azul':'Verde'})`;
+    vidasTxt.textContent = `Jugador 1 ${"❤️".repeat(vidas[0])} | Jugador 2 ${"❤️".repeat(vidas[1])}`;
+  }
+
+  function mostrarFinal(txt){
+    finalMsg.innerHTML = txt;
+    finalMsg.style.display = 'block';
+  }
+
+  function bloquear(){
+    document.querySelectorAll('.cell').forEach(c=> c.onclick = null);
+  }
+
+  function reiniciar(){ location.reload(); }
+
+  // -----------------------
+  // EXPLOSIÓN REALISTA: funciones que crean elementos y animan
+  // -----------------------
+  function crearExplosionRealista(celda, jugador){
+    // coordenadas relativas dentro de la celda (centro)
+    const rect = celda.getBoundingClientRect();
+
+    // color según jugador
+    const color = jugador === 1 ? { core: 'rgba(180,210,255,1)', mid: 'rgba(30,100,250,0.95)', flame1:'#ffcf6b', flame2:'#ff7b3d' }
+                               : { core: 'rgba(200,255,200,1)', mid: 'rgba(20,180,80,0.95)', flame1:'#fff59b', flame2:'#ffd54f' };
+
+    // ------------------------------------------------
+    // contenedor explosion (pos relative a la celda)
+    const expl = document.createElement('div');
+    expl.className = 'explosion';
+    // bakal shift: position centered on the clicked cell
+    expl.style.left = '50%';
+    expl.style.top = '50%';
+
+    // RING 1
+    const ring1 = document.createElement('div');
+    ring1.className = 'ring';
+    ring1.style.width = '28px';
+    ring1.style.height = '28px';
+    ring1.style.border = `2px solid ${color.mid}`;
+    ring1.style.background = 'transparent';
+    // RING 2 (delay slight)
+    const ring2 = document.createElement('div');
+    ring2.className = 'ring r2';
+    ring2.style.width = '18px';
+    ring2.style.height = '18px';
+    ring2.style.border = `2px dashed ${color.core}`;
+    ring2.style.background = 'transparent';
+    ring2.style.animationDelay = '80ms';
+
+    // CORE BRILLO
+    const core = document.createElement('div');
+    core.className = 'boomCore';
+    core.style.background = `radial-gradient(circle, ${color.core} 0%, ${color.mid} 40%, rgba(255,120,20,0.25) 65%, rgba(0,0,0,0) 100%)`;
+
+    // LLAMAS (capas)
+    const flameWrap = document.createElement('div');
+    flameWrap.className = 'flame';
+    const f1 = document.createElement('div'); f1.className='f f1';
+    const f2 = document.createElement('div'); f2.className='f f2';
+    f1.style.background = `radial-gradient(circle at 30% 30%, ${color.flame1}, ${color.flame2})`;
+    f2.style.background = `radial-gradient(circle at 40% 40%, ${color.flame2}, rgba(255,80,0,0.15))`;
+    flameWrap.appendChild(f1); flameWrap.appendChild(f2);
+
+    // HUMO (varias burbujas)
+    const smokeWrap = document.createElement('div');
+    smokeWrap.className = 'smoke';
+    for(let i=0;i<4;i++){
+      const s = document.createElement('div');
+      s.className = 's';
+      s.style.width = `${12 + Math.random()*20}px`;
+      s.style.height = `${8 + Math.random()*18}px`;
+      s.style.left = `${-30 + Math.random()*60}px`;
+      s.style.background = `rgba(40,40,40,${0.18 + Math.random()*0.35})`;
+      s.style.animationDelay = `${80 + i*60}ms`;
+      smokeWrap.appendChild(s);
+    }
+
+    // FRAGMENTOS GRANDES (shards)
+    const shards = [];
+    for(let i=0;i<6;i++){
+      const sh = document.createElement('div');
+      sh.className = 'shard';
+      const w = 8 + Math.random()*14;
+      sh.style.width = `${w}px`;
+      sh.style.height = `${6 + Math.random()*10}px`;
+      sh.style.background = `linear-gradient(135deg, ${color.flame2}, ${color.mid})`;
+      // random direction
+      const ang = (Math.random()*Math.PI*2);
+      const dist = 60 + Math.random()*160;
+      const tx = Math.cos(ang)*dist;
+      const ty = Math.sin(ang)*dist;
+      sh.style.setProperty('--tx', `${tx}px`);
+      sh.style.setProperty('--ty', `${ty}px`);
+      sh.style.setProperty('--rot', `${(Math.random()*720-360)}deg`);
+      sh.style.left = '50%'; sh.style.top = '50%';
+      shards.push(sh);
+    }
+
+    // CHISPAS (pequeñas)
+    const sparks = [];
+    for(let i=0;i<18;i++){
+      const sp = document.createElement('div');
+      sp.className = 'spark';
+      const sx = (Math.random()*2-1) * (40 + Math.random()*120);
+      const sy = (Math.random()*-1) * (20 + Math.random()*120);
+      sp.style.setProperty('--sx', `${sx}px`);
+      sp.style.setProperty('--sy', `${sy}px`);
+      sp.style.left = '50%'; sp.style.top = '50%';
+      // color gradiente
+      const g = Math.random();
+      const col = g<0.6 ? color.flame1 : color.flame2;
+      sp.style.background = col;
+      sparks.push(sp);
+    }
+
+    // Añadir todo al contenedor explosion
+    expl.appendChild(ring1);
+    expl.appendChild(ring2);
+    expl.appendChild(core);
+    expl.appendChild(flameWrap);
+    expl.appendChild(smokeWrap);
+    shards.forEach(s=>expl.appendChild(s));
+    sparks.forEach(s=>expl.appendChild(s));
+
+    // posicionar la explosion dentro de la celda: usar coordinates pixel para mayor precisión
+    // colocamos el contenedor como absolute dentro de la celda
+    expl.style.position = 'absolute';
+    expl.style.left = '50%';
+    expl.style.top = '50%';
+    expl.style.transform = 'translate(-50%,-50%)';
+    expl.style.width = '0'; expl.style.height = '0';
+
+    // Insertar y luego eliminar tras animaciones
+    celda.appendChild(expl);
+
+    // timeline para limpieza: dejar un poco más para humo
+    setTimeout(()=> {
+      // remover con ligera transición
+      expl.style.transition = 'opacity .35s';
+      expl.style.opacity = '0';
+      setTimeout(()=> { if(expl && expl.remove) expl.remove(); }, 520);
+    }, 900);
+  }
+
+  // Fin funciones explosion
+  // -----------------------
+
+</script>
+</body>
+</html>

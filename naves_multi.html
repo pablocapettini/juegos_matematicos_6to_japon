@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naves y multiplicaciones</title>
+<style>
+  body { margin:0; overflow:hidden; background:black; font-family: Arial; }
+  canvas { display:block; margin:0 auto; background:black; }
+  #lives, #level, #question { position:absolute; color:white; font-size:18px; }
+  #lives { top:10px; left:10px; }
+  #level { top:10px; right:10px; }
+  #question { top:50px; width:100%; text-align:center; font-size:24px; }
+  #restartBtn, #rankingBtn {
+    display:none;
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    padding:12px 25px;
+    font-size:18px;
+    background:yellow;
+    border:none;
+    cursor:pointer;
+    border-radius:10px;
+  }
+  #restartBtn { top:55%; }
+  #rankingBtn { top:65%; }
+
+  #rankingTable {
+    display:none;
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%, -50%);
+    background:#222;
+    color:white;
+    padding:20px;
+    border-radius:10px;
+    text-align:center;
+    box-shadow:0 0 15px yellow;
+  }
+  #rankingTable table {
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+  }
+  #rankingTable th, #rankingTable td {
+    border:1px solid yellow;
+    padding:8px;
+  }
+  #rankingTable button {
+    margin-top:10px;
+    padding:8px 15px;
+    background:yellow;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+  }
+
+  /* ESTILO PARA EL FOOTER */
+  #footer {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6); /* Blanco semi-transparente */
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    pointer-events: none; /* Para que no interfiera con clicks del juego */
+    z-index: 1000;
+  }
+</style>
+</head>
+<body>
+<div id="lives">Vidas: 3</div>
+<div id="level">Nivel: 1</div>
+<div id="question"></div>
+<button id="restartBtn" onclick="restartGame()">Empezar de Nuevo</button>
+<button id="rankingBtn" onclick="showRanking()">Ver Ranking</button>
+
+<div id="footer">Hecho por Bastian y Lautaro de 6° grado de La Japón | 2025</div>
+
+<div id="rankingTable">
+  <h2>🏆 Ranking de Jugadores 🏆</h2>
+  <table id="rankingList">
+    <tr><th>Posición</th><th>Nombre</th><th>Tiempo (s)</th><th>Errores</th></tr>
+  </table>
+  <button onclick="closeRanking()">Cerrar</button>
+</div>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let level = 1, lives = 3, gameOver = false;
+let player = { x:400, y:500, width:50, height:50, speed:5 };
+let bullets = [], enemies = [];
+let keys = {};
+let startTime, endTime;
+let totalErrors = 0;
+
+// 🎵 Música de fondo
+const backgroundMusic = new Audio('Space Invaders Extreme 2 -AUDIO ELEMENT - 01. ReExtReMe.mp3');
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.4;
+let musicStarted = false;
+
+// Sonidos del juego
+const shootSound = new Audio('https://freesound.org/data/previews/320/320181_5260877-lq.mp3');
+const hitSound = new Audio('https://freesound.org/data/previews/256/256113_4486188-lq.mp3');
+const wrongSound = new Audio('https://freesound.org/data/previews/331/331912_3248244-lq.mp3');
+
+// 🕹️ Controles
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (!musicStarted) {
+    backgroundMusic.play().catch(()=>{});
+    musicStarted = true;
+    startTime = Date.now();
+  }
+});
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+document.addEventListener('keydown', e => {
+  if(e.key===' ' && !gameOver){
+    bullets.push({x:player.x+player.width/2, y:player.y, width:5, height:10});
+    shootSound.play();
+  }
+});
+
+function generateMultiplication(){
+  const a = Math.floor(Math.random()*10)+1;
+  const b = Math.floor(Math.random()*10)+1;
+  return {question:`${a} x ${b}`, answer: a*b};
+}
+
+function generateEnemies(){
+  enemies=[];
+  const mult = generateMultiplication();
+  document.getElementById('question').innerText = "¿Cuánto es "+mult.question+"?";
+  const maxEnemies = Math.min(3+level-1, 6);
+  const correctIndex = Math.floor(Math.random()*maxEnemies);
+
+  const optionsSet = new Set();
+  while(optionsSet.size < maxEnemies - 1){
+    let val = Math.floor(Math.random()*100)+1;
+    if(val === mult.answer) continue;
+    optionsSet.add(val);
+  }
+
+  let options = Array.from(optionsSet);
+  options.splice(correctIndex, 0, mult.answer);
+  while(options.length < maxEnemies){
+    options.push(Math.floor(Math.random()*100)+1);
+  }
+
+  for(let i=0;i<maxEnemies;i++){
+    enemies.push({
+      x:50 + i*120,
+      y:50,
+      width:40,
+      height:40,
+      speed: Math.max(0.3, 0.5 + level*0.15),
+      correct: options[i] === mult.answer,
+      text: options[i],
+      hit:false
+    });
+  }
+}
+
+function update(){
+  if(gameOver) return;
+  if(keys['ArrowLeft'] && player.x>0) player.x -= player.speed;
+  if(keys['ArrowRight'] && player.x+player.width<canvas.width) player.x += player.speed;
+
+  let lifeLostThisFrame = false;
+  for(let i=enemies.length-1;i>=0;i--){
+    let e = enemies[i];
+    e.y += e.speed;
+    if(e.y > canvas.height && !e.hit){
+      e.hit = true;
+      lifeLostThisFrame = true;
+      enemies.splice(i,1);
+    }
+  }
+
+  if(lifeLostThisFrame){
+    lives--;
+    totalErrors++;
+    document.getElementById('lives').innerText = 'Vidas: ' + lives;
+    wrongSound.play();
+    if(lives <= 0){
+      endGame(false);
+      return;
+    } else {
+      if(enemies.length === 0){
+        setTimeout(()=>{ if(!gameOver) generateEnemies(); }, 600);
+      }
+    }
+  }
+
+  for(let i=bullets.length-1;i>=0;i--){
+    let b = bullets[i];
+    b.y -= 8;
+    if(b.y<0){ bullets.splice(i,1); continue; }
+
+    for(let j=enemies.length-1;j>=0;j--){
+      let e = enemies[j];
+      if(!e.hit && b.x>e.x && b.x<e.x+e.width && b.y>e.y && b.y<e.y+e.height){
+        bullets.splice(i,1);
+        e.hit = true;
+        if(e.correct){
+          hitSound.play();
+
+          if(level === 10){
+            endGame(true);
+            return;
+          }
+
+          level++;
+          document.getElementById('level').innerText = 'Nivel: ' + level;
+          setTimeout(()=>{ if(!gameOver) generateEnemies(); }, 300);
+
+        } else {
+          wrongSound.play();
+          lives--;
+          totalErrors++;
+          document.getElementById('lives').innerText = 'Vidas: ' + lives;
+          enemies.splice(j,1);
+          if(lives <= 0){
+            endGame(false);
+            return;
+          } else {
+            if(enemies.length === 0){
+              setTimeout(()=>{ if(!gameOver) generateEnemies(); }, 600);
+            }
+          }
+        }
+        break;
+      }
+    }
+  }
+}
+
+function endGame(won){
+  backgroundMusic.pause();
+  gameOver = true;
+  endTime = Date.now();
+  const totalTime = ((endTime - startTime) / 1000).toFixed(2);
+
+  let message = won ? "🏆 SOS UN CAMPEÓN DE MULTIPLICACIONES 🏆" : "💀 GAME OVER 💀";
+  document.getElementById('question').innerText = message;
+  document.getElementById('restartBtn').style.display='block';
+  document.getElementById('rankingBtn').style.display='block';
+
+  const name = prompt("Ingresa tu nombre para el ranking:") || "Jugador";
+  saveScore(name, totalTime, totalErrors);
+}
+
+function saveScore(name, time, errors){
+  let ranking = JSON.parse(localStorage.getItem("rankingMultiplicaciones") || "[]");
+  ranking.push({ name, time: parseFloat(time), errors });
+  ranking.sort((a,b)=> a.time - b.time || a.errors - b.errors);
+  if(ranking.length > 10) ranking = ranking.slice(0,10);
+  localStorage.setItem("rankingMultiplicaciones", JSON.stringify(ranking));
+}
+
+function showRanking(){
+  const ranking = JSON.parse(localStorage.getItem("rankingMultiplicaciones") || "[]");
+  const table = document.getElementById("rankingList");
+  table.innerHTML = "<tr><th>Posición</th><th>Nombre</th><th>Tiempo (s)</th><th>Errores</th></tr>";
+  ranking.forEach((r,i)=>{
+    const row = `<tr><td>${i+1}</td><td>${r.name}</td><td>${r.time}</td><td>${r.errors}</td></tr>`;
+    table.innerHTML += row;
+  });
+  document.getElementById("rankingTable").style.display = "block";
+}
+
+function closeRanking(){
+  document.getElementById("rankingTable").style.display = "none";
+}
+
+let stars = Array.from({length:100},()=>({x:Math.random()*canvas.width, y:Math.random()*canvas.height, size:Math.random()*2+1, speed:Math.random()*0.5+0.2}));
+function drawBackground(){
+  ctx.fillStyle='black';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='white';
+  stars.forEach(s=>{
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.size,0,Math.PI*2); ctx.fill();
+    s.y += s.speed;
+    if(s.y>canvas.height){ s.y=0; s.x=Math.random()*canvas.width; }
+  });
+}
+
+function drawPlayer(){
+  ctx.fillStyle='cyan';
+  ctx.beginPath();
+  ctx.moveTo(player.x+player.width/2, player.y);
+  ctx.lineTo(player.x, player.y+player.height);
+  ctx.lineTo(player.x+player.width, player.y+player.height);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawBullets(){
+  ctx.fillStyle='yellow';
+  bullets.forEach(b=>ctx.fillRect(b.x-2,b.y,b.width,b.height));
+}
+
+function drawEnemies(){
+  enemies.forEach(e=>{
+    ctx.fillStyle='yellow';
+    ctx.beginPath();
+    ctx.moveTo(e.x+e.width/2,e.y);
+    ctx.lineTo(e.x,e.y+e.height);
+    ctx.lineTo(e.x+e.width,e.y+e.height);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.font='bold 18px Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'black';
+    ctx.strokeText(e.text, e.x+e.width/2, e.y+e.height/1.5);
+    ctx.fillStyle='white';
+    ctx.fillText(e.text, e.x+e.width/2, e.y+e.height/1.5);
+  });
+}
+
+function loop(){
+  if(!gameOver){
+    update();
+    drawBackground();
+    drawPlayer();
+    drawBullets();
+    drawEnemies();
+    requestAnimationFrame(loop);
+  }
+}
+
+function restartGame(){
+  level=1;
+  lives=3;
+  totalErrors=0;
+  gameOver=false;
+  bullets=[];
+  enemies=[];
+  document.getElementById('lives').innerText='Vidas: '+lives;
+  document.getElementById('level').innerText='Nivel: '+level;
+  document.getElementById('question').innerText='';
+  document.getElementById('restartBtn').style.display='none';
+  document.getElementById('rankingBtn').style.display='none';
+  backgroundMusic.currentTime = 0;
+  backgroundMusic.play().catch(()=>{});
+  musicStarted = true;
+  startTime = Date.now();
+  generateEnemies();
+  loop();
+}
+
+generateEnemies();
+loop();
+</script>
+</body>
+</html>

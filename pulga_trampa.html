@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Las Pulgas y la Trampa 🐜🎮</title>
+
+<style>
+  body {
+  font-family: "Comic Sans MS", sans-serif;
+  background: linear-gradient(135deg,#f8c8dc,#c7d9ff,#b8e0d2);
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+  #contenedor {
+  display: flex;
+  flex-direction: row;            /* tablero izquierda – botones derecha */
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1300px;              /* evita que todo se apriete y se solape */
+  padding: 10px;
+  box-sizing: border-box;
+  gap: 60px;                      /* separación REAL */
+}
+
+
+  
+#panel {
+  width: auto;
+  min-width: 500px;               /* asegura espacio para tablero y texto */
+  text-align: center;
+}
+
+  h1 { color:#800020; margin: 0 0px 10px; }
+
+  #mensaje {
+    font-size:1.1em;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.6);
+    padding: 8px 12px;
+    border-radius: 10px;
+  }
+
+  #tablero {
+    display:grid;
+    grid-template-columns:repeat(10,45px);
+    grid-gap:5px;
+    justify-content:center;
+    margin-top: 10px;
+  }
+
+  .casilla {
+    width:45px;
+    height:45px;
+    background:#fffafc;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    border:2px solid #aaa;
+    box-shadow:0 2px 4px rgba(0,0,0,0.1);
+    transition: transform .25s, background .3s;
+  }
+
+  .pulga {
+    background:#b8e0d2 !important;
+    border:2px solid #7cc1a3;
+    animation:saltar 0.35s ease-in-out;
+  }
+
+  @keyframes saltar {
+    0%{ transform: translateY(0); }
+    50%{ transform: translateY(-18px) scale(1.15); }
+    100%{ transform: translateY(0); }
+  }
+
+  .trampa {
+    background:#f8c8dc !important;
+    border:2px solid #e3a8bf;
+    color:#800020;
+  }
+
+  #vidas {
+    margin-top:10px;
+    font-size:1.2em;
+    color:#333;
+    font-weight: bold;
+  }
+
+  #botonera {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  width: 120px;                   /* columna fija */
+  flex-shrink: 0;                 /* PROHÍBE que invada el tablero */
+}
+
+  #botonera button {
+    padding:10px 14px;
+    border:none;
+    border-radius:10px;
+    background:#bcd3ff;
+    cursor:pointer;
+    font-size:1.1em;
+    font-weight:bold;
+    box-shadow:0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  #niveles button, #reiniciarBtn {
+    padding:8px 15px;
+    margin: 5px;
+    border:none;
+    border-radius:10px;
+    background:#c7d9ff;
+    cursor:pointer;
+    font-size:1em;
+    box-shadow:0 3px 5px rgba(0,0,0,0.2);
+  }
+
+  #reiniciarBtn {
+    background:#f8c8dc;
+  }
+
+</style>
+</head>
+
+<body>
+
+<div id="contenedor">
+
+  <div id="panel">
+    <h1>🐜 La pulga y las trampas</h1>
+   
+
+
+    <div id="mensaje">Elegí un nivel para comenzar.</div>
+
+    <div id="niveles">
+      <button onclick="seleccionarNivel('facil')">Fácil</button>
+      <button onclick="seleccionarNivel('medio')">Medio</button>
+      <button onclick="seleccionarNivel('dificil')">Difícil</button>
+    </div>
+
+    <div id="tablero"></div>
+
+    <div id="vidas">❤️ Vidas: <span id="vidasJ1">3</span></div>
+
+    <button id="reiniciarBtn">Reiniciar (Ctrl+R)</button>
+  </div>
+
+  <div id="botonera"></div>
+
+</div>
+
+<script>
+let totalCasillas = 61; // 0 a 60
+let trampas = [], posicion = 0, vidas = 3;
+let fase = "esperandoNivel", nivel = null;
+let saltoFijo = null;
+let intervaloSalto = null;
+
+const tablero = document.getElementById("tablero"),
+      mensaje = document.getElementById("mensaje"),
+      v1 = document.getElementById("vidasJ1"),
+      reiniciarBtn = document.getElementById("reiniciarBtn"),
+      botonera = document.getElementById("botonera");
+
+function seleccionarNivel(n){
+  nivel = n;
+  fase = "botColoca";
+
+  vidas = 3;
+  posicion = 0;
+  saltoFijo = null;
+  v1.textContent = vidas;
+  mensaje.textContent = "El bot está colocando trampas…";
+
+  crearTablero();
+  crearBotones();
+  setTimeout(botColocaTrampas, 1200);
+}
+
+function crearTablero(){
+  tablero.innerHTML = "";
+  for(let i=0; i<totalCasillas; i++){
+    const d = document.createElement("div");
+    d.className = "casilla";
+    d.textContent = i;
+    tablero.appendChild(d);
+  }
+  actualizarTablero();
+}
+
+function crearBotones(){
+  botonera.innerHTML = "";
+  for(let i=1; i<=10; i++){
+    const b = document.createElement("button");
+    b.textContent = `x${i}`;
+    b.onclick = () => iniciarSaltos(i);
+    botonera.appendChild(b);
+  }
+}
+
+function actualizarTablero(){
+  document.querySelectorAll(".casilla").forEach((c,i)=>{
+    c.className = "casilla";
+    if(trampas.includes(i)) c.classList.add("trampa");
+    if(i === posicion) c.classList.add("pulga");
+  });
+}
+
+function botColocaTrampas(){
+  trampas = [];
+  let cantidad = nivel === "facil" ? 5 : nivel === "medio" ? 10 : 20;
+
+  while(trampas.length < cantidad){
+    const pos = Math.floor(Math.random()*totalCasillas);
+    if(!trampas.includes(pos) && pos!==0) trampas.push(pos);
+  }
+
+  mensaje.textContent = "Elegí un número. La pulga saltará siempre con ese valor.";
+  fase = "jugadorSalta";
+  actualizarTablero();
+}
+
+function iniciarSaltos(valor){
+  if(fase !== "jugadorSalta") return;
+
+  if(intervaloSalto) clearInterval(intervaloSalto);
+  saltoFijo = valor;
+
+  mensaje.textContent = `Saltando de a ${saltoFijo}…`;
+
+  intervaloSalto = setInterval(ejecutarSalto, 600);
+}
+
+function ejecutarSalto(){
+  if(fase !== "jugadorSalta") return;
+
+  posicion += saltoFijo;
+
+  if(posicion >= totalCasillas - 1){
+    posicion = totalCasillas - 1;
+    actualizarTablero();
+    mensaje.textContent = "🎉 ¡Ganaste!";
+    fase = "fin";
+    clearInterval(intervaloSalto);
+    return;
+  }
+
+  actualizarTablero();
+
+  if(trampas.includes(posicion)){
+    vidas--;
+    v1.textContent = vidas;
+    mensaje.textContent = `💥 Trampa. Vidas: ${vidas}`;
+
+    if(vidas <= 0){
+      mensaje.textContent = "😵 Sin vidas. Perdiste.";
+      fase = "fin";
+      clearInterval(intervaloSalto);
+      return;
+    }
+  }
+}
+
+function reiniciarJuego(){ location.reload(); }
+
+reiniciarBtn.onclick = reiniciarJuego;
+
+document.addEventListener("keydown",e=>{
+  if(e.ctrlKey && e.key.toLowerCase()==="r"){
+    e.preventDefault();
+    reiniciarJuego();
+  }
+});
+</script>
+<footer style="text-align:center; margin-top:20px; padding:10px; background-color:#f0f0f0;">
+    Hecho por Gaby🐜, Amira🐜 y Priscila🐜 de 6° grado de "La Japón" - 2025
+</footer>
+</body>
+</html>

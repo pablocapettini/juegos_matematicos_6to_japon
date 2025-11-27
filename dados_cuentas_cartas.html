@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dados, cuentas y cartas</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #6fa8dc, #b39ddb, #f48fb1);
+    background-size: 400% 400%;
+    animation: gradient 10s ease infinite;
+    color: #000;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  #panel-izquierdo {
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 3px solid rgba(255,255,255,0.4);
+    padding: 20px;
+    padding-bottom: 40px; /* Espacio extra para que el footer no tape botones en pantallas chicas */
+  }
+
+  #zona-derecha {
+    width: 65%;
+    text-align: center;
+    padding: 20px;
+    overflow-y: auto;
+    padding-bottom: 50px; /* Espacio para el footer */
+  }
+
+  .cartas {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 15px 0;
+  }
+
+  .carta {
+    background: white;
+    color: black;
+    font-weight: bold;
+    width: 60px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.3s;
+  }
+
+  .carta:hover:not(.usada) {
+    transform: scale(1.1);
+  }
+
+  .usada {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .correcta {
+    background-color: #4CAF50 !important;
+    color: white;
+  }
+
+  .incorrecta {
+    background-color: #e53935 !important;
+    color: white;
+  }
+
+  #dados {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 15px;
+  }
+
+  .dado {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    justify-items: center;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: transform 0.3s;
+  }
+
+  .punto {
+    width: 14px;
+    height: 14px;
+    background: black;
+    border-radius: 50%;
+  }
+
+  .dado.animar {
+    transform: rotate(360deg);
+  }
+
+  #botones {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 10px 0;
+  }
+
+  #botones button, #tirar {
+    font-size: 22px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+
+  #botones button:hover, #tirar:hover {
+    background-color: #f3e5f5;
+  }
+
+  #resultado {
+    font-size: 18px;
+    margin-top: 15px;
+  }
+
+  #pantalla-inicio {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-size: 1.3em;
+    text-align: center;
+    padding: 30px;
+    z-index: 10;
+  }
+
+  input {
+    padding: 10px;
+    font-size: 16px;
+    margin: 5px;
+    border-radius: 8px;
+    border: none;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  .vidas {
+    font-size: 20px;
+    margin: 8px;
+  }
+
+  /* ESTILO NUEVO DEL FOOTER */
+  #footer {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.65); /* Color oscuro semitransparente */
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.4);
+    pointer-events: none; /* Permite hacer clic "a través" del texto si hay algo abajo */
+    z-index: 5;
+  }
+</style>
+</head>
+<body>
+
+<div id="pantalla-inicio">
+  <p>🎲 Bienvenido a DADOS, CUENTAS Y CARTAS<br><br>
+  Cada jugador tiene 5 vidas ❤️.<br> Tirá los dados, elegí que operación hacer con los números que salieron y elegí la carta con el resultado. <br> Si fallás una carta o apretás "Paso", perdés una vida.<br>🏳️</p>
+  <br>
+  <div>
+    <label>Jugador 1: </label>
+    <input type="text" id="nombre1" placeholder="Jugador 1">
+  </div>
+  <div>
+    <label>Jugador 2: </label>
+    <input type="text" id="nombre2" placeholder="Jugador 2">
+  </div>
+  <br>
+  <button onclick="iniciarJuego()">Comenzar</button>
+</div>
+
+<div id="panel-izquierdo">
+  <h2>🎲 Dados</h2>
+  <div id="dados">
+    <div id="dado1" class="dado"></div>
+    <div id="dado2" class="dado"></div>
+  </div>
+  <button id="tirar" onclick="tirarDados()">🎲 Tirar Dados</button>
+  <div id="botones">
+    <button onclick="elegirOperacion('+')">+</button>
+    <button onclick="elegirOperacion('-')">-</button>
+    <button onclick="elegirOperacion('X')">X</button>
+    <button onclick="elegirOperacion('/')">/</button>
+    <button onclick="pasarTurno()">Paso 🔁</button>
+  </div>
+  <div id="turno">Turno del Jugador 1</div>
+  <div id="resultado"></div>
+</div>
+
+<div id="zona-derecha">
+  <h1>Cartas de los Jugadores</h1>
+
+  <div id="puntaje">Puntaje → <span id="p1">Jugador 1: 0</span> | <span id="p2">Jugador 2: 0</span></div>
+
+  <h3 id="nombre-j1">Jugador 1</h3>
+  <div class="vidas" id="vidas1">❤️❤️❤️❤️❤️</div>
+  <div class="cartas" id="cartas1"></div>
+
+  <h3 id="nombre-j2">Jugador 2</h3>
+  <div class="cartas" id="cartas2"></div>
+  <div class="vidas" id="vidas2">❤️❤️❤️❤️❤️</div>
+</div>
+
+<div id="footer">Hecho por Alma, Theo y Tizi de 6° grado de La Japón | 2025</div>
+
+<script>
+  let vidas = [5, 5];
+  let jugador = 1;
+  let num1 = 0, num2 = 0;
+  let operacionElegida = null;
+  let nombre1 = "Jugador 1", nombre2 = "Jugador 2";
+  let puntaje1 = 0, puntaje2 = 0;
+  let dadosGirando = false; 
+
+  const caras = {
+    1: [5],
+    2: [1, 9],
+    3: [1, 5, 9],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9]
+  };
+
+  function crearCara(dado, valor) {
+    dado.innerHTML = "";
+    for (let i = 1; i <= 9; i++) {
+      const punto = document.createElement("div");
+      if (caras[valor].includes(i)) {
+        punto.className = "punto";
+      }
+      dado.appendChild(punto);
+    }
+  }
+
+  function iniciarJuego() {
+    nombre1 = document.getElementById("nombre1").value || "Jugador 1";
+    nombre2 = document.getElementById("nombre2").value || "Jugador 2";
+    document.getElementById("pantalla-inicio").style.display = "none";
+    document.getElementById("nombre-j1").textContent = nombre1;
+    document.getElementById("nombre-j2").textContent = nombre2;
+    document.getElementById("turno").textContent = `Turno de ${nombre1}`;
+    actualizarVidas();
+    generarCartas();
+  }
+
+  function generarCartas() {
+    const fila1 = document.getElementById("cartas1");
+    const fila2 = document.getElementById("cartas2");
+    fila1.innerHTML = "";
+    fila2.innerHTML = "";
+    for (let i = 1; i <= 10; i++) {
+      const carta1 = document.createElement("div");
+      carta1.className = "carta";
+      carta1.textContent = i;
+      carta1.onclick = () => seleccionarCarta(carta1, i, 1);
+      fila1.appendChild(carta1);
+
+      const carta2 = document.createElement("div");
+      carta2.className = "carta";
+      carta2.textContent = i;
+      carta2.onclick = () => seleccionarCarta(carta2, i, 2);
+      fila2.appendChild(carta2);
+    }
+  }
+
+  function tirarDados() {
+    if (dadosGirando) return; 
+    dadosGirando = true;
+
+    const dado1 = document.getElementById("dado1");
+    const dado2 = document.getElementById("dado2");
+    dado1.classList.add("animar");
+    dado2.classList.add("animar");
+
+    setTimeout(() => {
+      dado1.classList.remove("animar");
+      dado2.classList.remove("animar");
+      num1 = Math.floor(Math.random() * 6) + 1;
+      num2 = Math.floor(Math.random() * 6) + 1;
+      crearCara(dado1, num1);
+      crearCara(dado2, num2);
+      document.getElementById("resultado").textContent = "Elige una operación y una carta.";
+      dadosGirando = false;
+    }, 600);
+  }
+
+  function elegirOperacion(op) {
+    operacionElegida = op;
+    document.getElementById("resultado").textContent = `Elegiste ${op}. Ahora toca una carta.`;
+  }
+
+  function seleccionarCarta(carta, valor, jugadorCarta) {
+    if (jugadorCarta !== jugador) return;
+    if (carta.classList.contains("usada")) return;
+    if (!operacionElegida || num1 === 0 || num2 === 0) {
+      alert("Primero tira los dados y elige una operación.");
+      return;
+    }
+
+    let resultado;
+    switch (operacionElegida) {
+      case '+': resultado = num1 + num2; break;
+      case '-': resultado = Math.abs(num1 - num2); break;
+      case 'X': resultado = num1 * num2; break;
+      case '/': resultado = Math.round((num1 / num2) * 100) / 100; break;
+    }
+
+    if (Number(valor) === resultado) {
+      carta.classList.add("correcta", "usada");
+      carta.onclick = null;
+      document.getElementById("resultado").textContent = `✅ ¡Correcto! Era ${resultado}.`;
+      sumarPunto();
+    } else {
+      carta.classList.add("incorrecta", "usada");
+      carta.onclick = null;
+      restarVida(jugador);
+      document.getElementById("resultado").textContent = `❌ Incorrecto. Era ${resultado}.`;
+    }
+
+    cambiarTurno();
+  }
+
+  function pasarTurno() {
+    document.getElementById("resultado").textContent = "⏭️ Has pasado el turno, pierdes una vida.";
+    restarVida(jugador);
+    cambiarTurno();
+  }
+
+  function restarVida(j) {
+    vidas[j - 1]--;
+    actualizarVidas();
+    if (vidas[j - 1] <= 0) {
+      finDelJuego(j === 1 ? 2 : 1);
+    }
+  }
+
+  function actualizarVidas() {
+    document.getElementById("vidas1").textContent = "❤️".repeat(vidas[0]);
+    document.getElementById("vidas2").textContent = "❤️".repeat(vidas[1]);
+  }
+
+  function sumarPunto() {
+    if (jugador === 1) puntaje1++;
+    else puntaje2++;
+    document.getElementById("p1").textContent = `${nombre1}: ${puntaje1}`;
+    document.getElementById("p2").textContent = `${nombre2}: ${puntaje2}`;
+  }
+
+  function cambiarTurno() {
+    jugador = jugador === 1 ? 2 : 1;
+    const nombreTurno = jugador === 1 ? nombre1 : nombre2;
+    document.getElementById("turno").textContent = `Turno de ${nombreTurno}`;
+    operacionElegida = null;
+  }
+
+  // --- Sistema de tabla de jugadores ---
+  let historial = [];
+  let partidasJugadas = 0;
+
+  function finDelJuego(jugadorGanador) {
+    const ganador = jugadorGanador === 1 ? nombre1 : nombre2;
+    document.getElementById("resultado").textContent = `🏆 ¡${ganador} gana el juego! 🎉`;
+    document.getElementById("botones").style.display = "none";
+    document.getElementById("tirar").disabled = true;
+
+    document.querySelectorAll(".carta").forEach(c => {
+      c.onclick = null;
+      c.classList.add("usada");
+    });
+
+    // --- guardamos resultado en historial ---
+    partidasJugadas++;
+    historial.push(ganador);
+
+    // --- si se jugaron dos partidas, mostrar tabla ---
+    if (partidasJugadas === 2) {
+      mostrarTabla();
+      partidasJugadas = 0;
+      historial = [];
+    }
+
+    const mensajeFinal = document.createElement("div");
+    mensajeFinal.style.position = "fixed";
+    mensajeFinal.style.top = "0";
+    mensajeFinal.style.left = "0";
+    mensajeFinal.style.width = "100%";
+    mensajeFinal.style.height = "100%";
+    mensajeFinal.style.background = "rgba(0,0,0,0.8)";
+    mensajeFinal.style.color = "white";
+    mensajeFinal.style.display = "flex";
+    mensajeFinal.style.flexDirection = "column";
+    mensajeFinal.style.alignItems = "center";
+    mensajeFinal.style.justifyContent = "center";
+    mensajeFinal.style.fontSize = "2em";
+    mensajeFinal.style.zIndex = "20";
+    mensajeFinal.innerHTML = `🏆 <b>${ganador}</b> ha ganado el juego 🎉<br><br>
+    <button onclick="location.reload()" style="font-size:1em;padding:10px 20px;border:none;border-radius:10px;cursor:pointer;">🔁 Jugar de nuevo</button>`;
+    
+    document.body.appendChild(mensajeFinal);
+  }
+
+  function mostrarTabla() {
+    const tabla = document.createElement("div");
+    tabla.style.position = "fixed";
+    tabla.style.top = "0";
+    tabla.style.left = "0";
+    tabla.style.width = "100%";
+    tabla.style.height = "100%";
+    tabla.style.background = "rgba(0,0,0,0.9)";
+    tabla.style.color = "white";
+    tabla.style.display = "flex";
+    tabla.style.flexDirection = "column";
+    tabla.style.alignItems = "center";
+    tabla.style.justifyContent = "center";
+    tabla.style.fontSize = "1.5em";
+    tabla.style.zIndex = "30";
+
+    const ganador1 = historial.filter(n => n === nombre1).length;
+    const ganador2 = historial.filter(n => n === nombre2).length;
+
+    tabla.innerHTML = `
+      <h2>📊 Tabla de jugadores (2 partidas)</h2>
+      <table border="1" style="border-collapse:collapse;background:white;color:black;padding:10px;">
+        <tr><th>Jugador</th><th>Victorias</th></tr>
+        <tr><td>${nombre1}</td><td>${ganador1}</td></tr>
+        <tr><td>${nombre2}</td><td>${ganador2}</td></tr>
+      </table>
+      <br>
+      <button onclick="location.reload()" style="font-size:1em;padding:10px 20px;border:none;border-radius:10px;cursor:pointer;">🏁 Reiniciar todo</button>
+    `;
+
+    document.body.appendChild(tabla);
+  }
+
+</script>
+</body>
+</html>

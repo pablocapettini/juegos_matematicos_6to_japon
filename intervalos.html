@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎃 Caza a los Intervalos🎃</title>
+<style>
+  body {
+    font-family: "Comic Sans MS", sans-serif;
+    background-color: #ffa533; /* Fondo naranja sólido */
+    color: #3b1c00;
+    text-align: center;
+    user-select: none;
+    overflow: hidden;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Para empujar el contenido y dejar lugar al footer */
+  }
+  h1 {
+    color: #fff;
+    text-shadow: 3px 3px 6px #3b1c00;
+    margin-top: 20px;
+    font-size: 2.5em;
+  }
+  #vidas {
+    margin: 10px;
+  }
+  .vida {
+    width: 55px;
+    height: 55px;
+    margin: 4px;
+  }
+  #pregunta {
+    font-size: 1.6em;
+    margin: 25px;
+    word-break: break-word;
+  }
+  button {
+    background-color: #ff7b00;
+    border: none;
+    color: white;
+    border-radius: 12px;
+    padding: 12px 25px;
+    font-size: 1.2em;
+    margin: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 2px 2px 6px #4b1c00;
+  }
+  button:hover {
+    background-color: #ff9d00;
+    transform: scale(1.05);
+  }
+  #resultado {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-top: 10px;
+    min-height: 1.5em; /* Reserva espacio para que no salte todo */
+  }
+  #puntaje {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin: 10px;
+    color: #fff;
+  }
+  #nivel {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  /* Footer estilo */
+  #footer {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #5c3a00;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.4);
+    opacity: 0.8;
+  }
+</style>
+</head>
+<body>
+  <div>
+    <h1>🎃 Caza a los Intervalos Matemáticos 🎃</h1>
+    <div id="nivel">Nivel: 1 (6 cifras)</div>
+    <div id="puntaje">Puntaje: 0</div>
+    <div id="vidas"></div>
+    <div id="pregunta"></div>
+    <div id="opciones"></div>
+    <div id="resultado"></div>
+  </div>
+
+  <div id="footer">Hecho por Valentino, Mateo y Gonzalo de 6° grado de La Japón | 2025</div>
+
+  <audio id="musica" loop>
+    <source src="5-Minute Halloween Countdown Timer  Spooky Classroom & Party Fun.mp3" type="audio/mpeg">
+  </audio>
+
+  <audio id="risaBruja">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_15b87e3c81.mp3?filename=witch-cackle-7033.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const musica = document.getElementById("musica");
+    const risa = document.getElementById("risaBruja");
+    let musicaActiva = false;
+
+    function activarMusica() {
+      if (!musicaActiva) {
+        musica.play()
+          .then(() => {
+            musicaActiva = true;
+            // Mensaje eliminado
+          })
+          .catch(() => {
+            // Error silencioso o manejo interno si fuera necesario
+          });
+      }
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") activarMusica();
+      if (e.key === " ") {
+        musica.pause();
+        musica.currentTime = 0;
+        musicaActiva = false;
+      }
+    });
+    document.addEventListener("click", activarMusica);
+
+    // 🎃 Variables de juego
+    let vidas = 3;
+    let puntaje = 0;
+    let nivel = 1;
+    let preguntaActual = 0;
+    let preguntas = [];
+
+    const vidasDiv = document.getElementById("vidas");
+    const preguntaDiv = document.getElementById("pregunta");
+    const opcionesDiv = document.getElementById("opciones");
+    const resultadoDiv = document.getElementById("resultado");
+    const puntajeDiv = document.getElementById("puntaje");
+    const nivelDiv = document.getElementById("nivel");
+
+    function mostrarVidas() {
+      vidasDiv.innerHTML = "";
+      for (let i = 0; i < vidas; i++) {
+        const img = document.createElement("img");
+        img.src = "https://cdn-icons-png.flaticon.com/512/2107/2107957.png";
+        img.classList.add("vida");
+        vidasDiv.appendChild(img);
+      }
+    }
+
+    // Generar preguntas según nivel (6→9 cifras)
+    function generarPreguntas(cifras) {
+      const preguntas = [];
+      for (let i = 0; i < 5; i++) {
+        const base = Math.floor(Math.random() * (9 * 10 ** (cifras - 1)) + 10 ** (cifras - 1));
+        const inicio = base - Math.floor(Math.random() * 2000 + 1000);
+        const fin = base + Math.floor(Math.random() * 2000 + 1000);
+        const pertenece = Math.random() < 0.5;
+        const num = pertenece
+          ? Math.floor(Math.random() * (fin - inicio - 1)) + inicio + 1
+          : base + Math.floor(Math.random() * 10000 + 5000);
+        preguntas.push({
+          pregunta: `¿El número ${num.toLocaleString('es-ES')} pertenece al intervalo [${inicio.toLocaleString('es-ES')}, ${fin.toLocaleString('es-ES')}]?`,
+          respuesta: pertenece ? "Sí" : "No"
+        });
+      }
+      return preguntas;
+    }
+
+    function siguienteNivel() {
+      nivel++;
+      preguntaActual = 0;
+      if (nivel === 2) preguntas = generarPreguntas(7);
+      if (nivel === 3) preguntas = generarPreguntas(8);
+      if (nivel === 4) preguntas = generarPreguntas(9);
+      if (nivel > 4) {
+        preguntaDiv.textContent = "🎉 ¡Completaste todos los niveles! ¡Eres un maestro de los intervalos! 🎃";
+        opcionesDiv.innerHTML = "";
+        resultadoDiv.textContent = `Puntaje final: ${puntaje}`;
+        return;
+      }
+      nivelDiv.textContent = `Nivel: ${nivel} (${5 + nivel} cifras)`;
+      resultadoDiv.textContent = `🕸️ ¡Pasaste al siguiente nivel!`;
+      setTimeout(() => {
+        resultadoDiv.textContent = "";
+        mostrarPregunta();
+      }, 1500);
+    }
+
+    function mostrarPregunta() {
+      if (preguntaActual >= preguntas.length) {
+        siguienteNivel();
+        return;
+      }
+      const actual = preguntas[preguntaActual];
+      preguntaDiv.textContent = actual.pregunta;
+      opcionesDiv.innerHTML = "";
+      ["Sí", "No"].forEach(op => {
+        const btn = document.createElement("button");
+        btn.textContent = op;
+        btn.onclick = () => verificarRespuesta(op);
+        opcionesDiv.appendChild(btn);
+      });
+    }
+
+    function verificarRespuesta(opcion) {
+      const actual = preguntas[preguntaActual];
+      if (opcion === actual.respuesta) {
+        resultadoDiv.textContent = "✅ ¡Correcto!";
+        resultadoDiv.style.color = "green";
+        puntaje += 10;
+      } else {
+        resultadoDiv.textContent = "❌ Incorrecto";
+        resultadoDiv.style.color = "red";
+        vidas--;
+        if (vidas === 0) {
+          preguntaDiv.textContent = "💀 ¡Te quedaste sin calabazas!";
+          opcionesDiv.innerHTML = "";
+          resultadoDiv.textContent = `Puntaje final: ${puntaje}`;
+          mostrarVidas();
+          risa.play();
+          return;
+        }
+      }
+      mostrarVidas();
+      puntajeDiv.textContent = `Puntaje: ${puntaje}`;
+      preguntaActual++;
+      setTimeout(() => {
+        resultadoDiv.textContent = "";
+        mostrarPregunta();
+      }, 1000);
+    }
+
+    // Inicializar juego
+    mostrarVidas();
+    preguntas = generarPreguntas(6);
+    mostrarPregunta();
+  </script>
+</body>
+</html>
