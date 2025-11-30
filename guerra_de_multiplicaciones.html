@@ -147,5 +147,34 @@
     // Iniciar juego
     startRound();
   </script>
+  <a href="index.html" class="btn-volver">
+    ⬅ Volver al Menú
+</a>
+
+<style>
+    .btn-volver {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 999999; /* <--- ESTO ES LO IMPORTANTE (Nivel muy alto) */
+        
+        background-color: #1976d2;
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px; /* Un poco más grande para que se vea bien */
+        border-radius: 50px; /* Bordes bien redondos */
+        font-family: sans-serif;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* Sombra fuerte para resaltar */
+        border: 2px solid white; /* Borde blanco para que destaque del fondo */
+        transition: transform 0.2s;
+    }
+
+    .btn-volver:hover {
+        background-color: #1565c0;
+        transform: scale(1.1);
+    }
+</style>
 </body>
 </html>
+
