@@ -1,93 +1,97 @@
 <!DOCTYPE html>
 <html lang="es">
-	<style>
+<head>
+<meta charset="UTF-8">
+<title>Menú de Juegos</title>
+
+<style>
+    /* Fondo estilo japonés minimalista */
     body {
-        background: #f4f7f4;
-        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(to bottom, #faf7f2, #f7efe2);
         text-align: center;
-        padding: 30px;
     }
 
+    /* Título con toque japonés */
     h1 {
-        font-size: 32px;
-        color: #333;
+        font-size: 42px;
+        margin-bottom: 10px;
+        color: #b30000;
+        letter-spacing: 2px;
+        font-weight: 700;
     }
 
+    /* Subtítulo japonés en kanji decorativo */
+    .sub {
+        font-size: 20px;
+        color: #444;
+        font-style: italic;
+        margin-bottom: 35px;
+    }
+
+    /* Contenedor del menú */
     .menu {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 18px;
         max-width: 400px;
-        margin: 40px auto;
+        margin: auto;
     }
 
-    a {
+    /* Botones estilo "tori japonés" */
+    .menu a {
+        display: block;
         padding: 15px;
-        background: #0078ff;
-        color: white;
-        border-radius: 10px;
+        border-radius: 12px;
         text-decoration: none;
         font-size: 20px;
-        font-weight: bold;
-        transition: 0.2s;
+        font-weight: 600;
+        background: #ffffffcc;
+        border: 2px solid #b30000;
+        color: #b30000;
+        transition: 0.25s;
     }
 
-    a:hover {
-        background: #005fcc;
+    .menu a:hover {
+        background: #b30000;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 10px #00000022;
     }
+
+    /* Detalle sakura */
+    .sakura {
+        width: 90px;
+        opacity: 0.7;
+        margin-bottom: 20px;
+    }
+
 </style>
-
-<head>
-    <meta charset="UTF-8">
-    <title>Menú de Juegos</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background: #f0f0f0;
-            padding: 20px;
-        }
-        h1 {
-            margin-bottom: 30px;
-        }
-        .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 300px;
-            margin: auto;
-        }
-        a {
-            display: block;
-            padding: 12px;
-            background: #1976d2;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 18px;
-        }
-        a:hover {
-            background: #0d47a1;
-        }
-    </style>
 </head>
+
 <body>
-    
+
+    <!-- Icono o flor sakura arriba -->
+    <img class="sakura" src="https://i.imgur.com/VmkM7Q6.png" alt="Sakura">
+
     <h1>Menú de Juegos</h1>
+    <div class="sub">日本 ゲーム · Juegos creados por 6°</div>
 
     <div class="menu">
         <a href="divisores.html">Divisores</a>
         <a href="pulga_trampa.html">La pulga y las trampas</a>
         <a href="tapadita.html">Tapadita</a>
         <a href="dados_cuentas_cartas.html">Dados, cuentas y cartas</a>
-	    <a href="naves_multi.html">Naves y multiplicaciones</a>
-	    <a href="Comparando_fracciones.html">Comparando Fracciones</a>
-		<a href="guerra_de_multiplicaciones.html">Guerra de Multiplicaciones</a>
-		
+        <a href="naves_multi.html">Naves y multiplicaciones</a>
+        <a href="Comparando_fracciones.html">Comparando Fracciones</a>
+        <a href="guerra_de_multiplicaciones.html">Guerra de Multiplicaciones</a>
     </div>
 
 </body>
 </html>
+
 
 
 
