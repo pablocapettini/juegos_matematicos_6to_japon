@@ -5,41 +5,75 @@
 <title>Menú de Juegos</title>
 
 <style>
-    /* Fondo estilo japonés minimalista */
-    body {
+    /* ----------- FUENTES Y RESET ----------- */
+    * {
+        box-sizing: border-box;
         margin: 0;
-        padding: 40px 20px;
-        font-family: "Segoe UI", sans-serif;
-        background: linear-gradient(to bottom, #faf7f2, #f7efe2);
-        text-align: center;
+        padding: 0;
     }
 
-    /* Título estilo japonés */
+    body {
+        font-family: "Segoe UI", sans-serif;
+        padding: 40px 20px;
+        text-align: center;
+        color: #2c2c2c;
+        transition: 0.3s;
+        
+        /* Fondo HOKUSAI */
+        background: url("https://i.imgur.com/n5KWz7U.jpeg") center/cover fixed no-repeat;
+        backdrop-filter: blur(2px);
+    }
+
+    /* ------- MODO OSCURO -------- */
+    body.dark {
+        color: #eee;
+        background: #0f0f0f;
+    }
+
+    body.dark .menu a {
+        background: #222;
+        border-color: #e63946;
+        color: #fff;
+    }
+    body.dark .menu a:hover {
+        background: #e63946;
+        color: white;
+    }
+
+    /* ----------- ENCABEZADO TORII ---------- */
+    .torii {
+        width: 120px;
+        opacity: 0.9;
+        margin-bottom: 10px;
+    }
+
     h1 {
         font-size: 42px;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         color: #b30000;
+        font-weight: 800;
         letter-spacing: 2px;
-        font-weight: 700;
+        text-shadow: 2px 2px 3px #ffffffaa;
     }
 
     .sub {
         font-size: 20px;
-        color: #444;
         font-style: italic;
         margin-bottom: 35px;
+        color: #333;
     }
 
-    /* Contenedor del menú en dos columnas */
+    /* ----------- MENÚ DOS COLUMNAS ----------- */
     .menu {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 18px;
         max-width: 500px;
+        gap: 18px;
         margin: 0 auto;
+        z-index: 10;
+        position: relative;
     }
 
-    /* Botones estilo japonés */
     .menu a {
         padding: 15px;
         background: #ffffffcc;
@@ -55,39 +89,87 @@
     .menu a:hover {
         background: #b30000;
         color: white;
-        transform: translateY(-3px);
-        box-shadow: 0 4px 10px #00000022;
+        transform: translateY(-4px);
+        box-shadow: 0 4px 10px #00000055;
     }
 
-    /* Flor sakura decorativa */
-    .sakura {
-        width: 90px;
-        opacity: 0.7;
-        margin-bottom: 20px;
+    /* ----------- ANIMACIÓN DE PÉTALOS ----------- */
+    .petalo {
+        position: fixed;
+        top: -10px;
+        width: 18px;
+        height: 18px;
+        background: pink;
+        border-radius: 70% 30% 70% 30%;
+        opacity: 0.75;
+        animation: caer linear infinite;
+    }
+
+    @keyframes caer {
+        0%   { transform: translateY(-10px) rotate(0deg); }
+        100% { transform: translateY(110vh) rotate(360deg); }
+    }
+
+    /* ----------- BOTÓN MODO OSCURO ----------- */
+    .toggle {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        background: #b30000;
+        border: none;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        box-shadow: 0 3px 8px #00000044;
     }
 </style>
-</head>
 
+</head>
 <body>
 
-    <img class="sakura" src="https://i.imgur.com/VmkM7Q6.png" alt="Sakura">
+<!-- BOTÓN MODO OSCURO -->
+<button class="toggle" onclick="document.body.classList.toggle('dark')">
+    夜 / Luz
+</button>
 
-    <h1>Menú de Juegos</h1>
-    <div class="sub">日本 · Juegos creados por 6°</div>
+<!-- ICONO TORII -->
+<img class="torii" src="https://i.imgur.com/nRn2ICs.png" alt="Torii">
 
-    <div class="menu">
-        <a href="divisores.html">Divisores</a>
-        <a href="pulga_trampa.html">La pulga y las trampas</a>
-        <a href="tapadita.html">Tapadita</a>
-        <a href="dados_cuentas_cartas.html">Dados, cuentas y cartas</a>
-        <a href="naves_multi.html">Naves y multiplicaciones</a>
-        <a href="Comparando_fracciones.html">Comparando Fracciones</a>
-        <a href="guerra_de_multiplicaciones.html">Guerra de Multiplicaciones</a>
-    </div>
+<h1>Menú de Juegos</h1>
+<div class="sub">日本 · Juegos creados por 6°</div>
+
+<!-- MENÚ DOS COLUMNAS -->
+<div class="menu">
+    <a href="divisores.html">Divisores</a>
+    <a href="pulga_trampa.html">La pulga y las trampas</a>
+    <a href="tapadita.html">Tapadita</a>
+    <a href="dados_cuentas_cartas.html">Dados, cuentas y cartas</a>
+    <a href="naves_multi.html">Naves y multiplicaciones</a>
+    <a href="Comparando_fracciones.html">Comparando Fracciones</a>
+    <a href="guerra_de_multiplicaciones.html">Guerra de Multiplicaciones</a>
+</div>
+
+<!-- GENERAR PÉTALOS -->
+<script>
+    function crearPetalo(){
+        const petalo = document.createElement("div");
+        petalo.classList.add("petalo");
+        petalo.style.left = Math.random() * 100 + "vw";
+        petalo.style.animationDuration = (4 + Math.random()*4) + "s";
+        petalo.style.opacity = 0.6 + Math.random()*0.4;
+
+        document.body.appendChild(petalo);
+
+        setTimeout(()=> petalo.remove(), 8000);
+    }
+
+    setInterval(crearPetalo, 350);
+</script>
 
 </body>
 </html>
-
 
 
 
