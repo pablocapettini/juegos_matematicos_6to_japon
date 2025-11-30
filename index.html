@@ -77,15 +77,15 @@
 
     /* ----------- MENÚ DOS COLUMNAS ----------- */
     .menu {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        max-width: 500px;
-        gap: 18px;
-        /* Centrado automático del menú, es más seguro que usar margins manuales */
-        margin: 0 auto; 
-        z-index: 10;
-        position: relative;
-    }
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 500px;
+    gap: 18px;
+    margin-left: auto;     /* ← esto empuja a la derecha */
+    margin-right: 80px;    /* ← ajustá este valor según lo necesites */
+    z-index: 10;
+    position: relative;
+}
 
     .menu a {
         display: block;
@@ -210,5 +210,6 @@
 
 </body>
 </html>
+
 
 
