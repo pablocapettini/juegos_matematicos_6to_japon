@@ -402,34 +402,37 @@
         checkOrderBtn.addEventListener('click', checkPlayerOrder);
         document.addEventListener('DOMContentLoaded', selectGameMode);
     </script>
-    <a href="index.html" class="btn-volver">
+   <a href="index.html" class="btn-volver">
     ⬅ Volver al Menú
 </a>
 
 <style>
     .btn-volver {
-        position: fixed; /* Se queda fijo al hacer scroll */
-        top: 15px;
-        left: 15px;      /* Esquina superior izquierda */
-        background-color: #1976d2; /* Mismo azul que el menú */
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 999999; /* <--- ESTO ES LO IMPORTANTE (Nivel muy alto) */
+        
+        background-color: #1976d2;
         color: white;
-        text-decoration: none; /* Quita el subrayado */
-        padding: 10px 20px;
-        border-radius: 8px; /* Bordes redondeados */
+        text-decoration: none;
+        padding: 12px 24px; /* Un poco más grande para que se vea bien */
+        border-radius: 50px; /* Bordes bien redondos */
         font-family: sans-serif;
         font-weight: bold;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.3); /* Sombrita */
-        z-index: 9999; /* Asegura que se vea por encima de todo */
-        transition: transform 0.2s, background 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* Sombra fuerte para resaltar */
+        border: 2px solid white; /* Borde blanco para que destaque del fondo */
+        transition: transform 0.2s;
     }
 
     .btn-volver:hover {
-        background-color: #1565c0; /* Un poco más oscuro al pasar el mouse */
-        transform: scale(1.05);    /* Efecto de "pop" */
+        background-color: #1565c0;
+        transform: scale(1.1);
     }
 </style>
 </body>
 </html>
+
 
 
 
