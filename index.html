@@ -14,16 +14,21 @@
     }
 
     body {
-    font-family: "Inter", sans-serif;
-    padding: 40px 20px;
-    text-align: center;
-    color: #2c2c2c;
-    transition: 0.3s;
+        font-family: "Inter", sans-serif;
+        padding: 40px 20px;
+        text-align: center;
+        color: #2c2c2c;
+        transition: 0.3s;
 
-    /* FONDO LOCAL APLICADO CORRECTAMENTE */
-    background: url("fondo.jpg") center/cover fixed no-repeat;
-    backdrop-filter: blur(2px);
-}
+        /* FONDO LOCAL APLICADO CORRECTAMENTE */
+        background: url("fondo.jpg") center/cover fixed no-repeat;
+        backdrop-filter: blur(2px);
+
+        /* --- CORRECCIÓN AQUÍ --- */
+        /* Esto evita que aparezca la barra de desplazamiento horizontal */
+        overflow-x: hidden; 
+        width: 100%;
+    }
 
 
     /* ------- MODO OSCURO -------- */
@@ -50,47 +55,47 @@
     }
 
     h1 {
-    font-family: "Poppins", sans-serif;
-    font-size: 42px;
-    margin-bottom: 5px;
-    color: #b30000;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
+        font-family: "Poppins", sans-serif;
+        font-size: 42px;
+        margin-bottom: 5px;
+        color: #b30000;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
 
 
     .sub {
-    font-family: "Noto Sans JP", sans-serif;
-    font-size: 20px;
-    font-style: normal;
-    margin-bottom: 35px;
-    color: #444;
-}
+        font-family: "Noto Sans JP", sans-serif;
+        font-size: 20px;
+        font-style: normal;
+        margin-bottom: 35px;
+        color: #444;
+    }
 
     /* ----------- MENÚ DOS COLUMNAS ----------- */
     .menu {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 500px;
-    gap: 18px;
-    margin-left: auto;     /* ← esto empuja a la derecha */
-    margin-right: 80px;    /* ← ajustá este valor según lo necesites */
-    z-index: 10;
-    position: relative;
-}
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 500px;
+        gap: 18px;
+        margin-left: auto;     
+        margin-right: 80px;    
+        z-index: 10;
+        position: relative;
+    }
 
 
     .menu a {
-    display: block;
-    padding: 12px;
-    background: #1976d2;
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: normal;
-    transition: 0.2s;
-}
+        display: block;
+        padding: 12px;
+        background: #1976d2;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: normal;
+        transition: 0.2s;
+    }
 
 
     .menu a:hover {
@@ -103,13 +108,14 @@
     /* ----------- ANIMACIÓN DE PÉTALOS ----------- */
     .petalo {
         position: fixed;
-        top: -10px;
+        top: -20px; /* Ajusté un poco esto para que nazcan más arriba */
         width: 18px;
         height: 18px;
         background: pink;
         border-radius: 70% 30% 70% 30%;
         opacity: 0.75;
         animation: caer linear infinite;
+        z-index: -1; /* Esto asegura que los pétalos no tapen los clics del menú */
     }
 
     @keyframes caer {
@@ -130,13 +136,13 @@
         cursor: pointer;
         font-weight: 600;
         box-shadow: 0 3px 8px #00000044;
+        z-index: 100; /* Asegura que el botón esté siempre encima */
     }
 </style>
 
 </head>
 <body>
 
-<!-- BOTÓN MODO OSCURO -->
 <button class="toggle" onclick="document.body.classList.toggle('dark')">
     夜 / Luz
 </button>
@@ -146,7 +152,6 @@
 <h1>Menú de Juegos</h1>
 <div class="sub">Juegos creados por 6° grado de la Escuela 9 DE. 7 "Japón"</div>
 
-<!-- MENÚ DOS COLUMNAS -->
 <div class="menu">
     <a href="divisores.html">Divisores</a>
     <a href="pulga_trampa.html">La pulga y las trampas</a>
@@ -157,12 +162,15 @@
     <a href="guerra_de_multiplicaciones.html">Guerra de Multiplicaciones</a>
 </div>
 
-<!-- GENERAR PÉTALOS -->
 <script>
     function crearPetalo(){
         const petalo = document.createElement("div");
         petalo.classList.add("petalo");
-        petalo.style.left = Math.random() * 100 + "vw";
+        
+        // CORRECCIÓN ADICIONAL: Generar hasta 95vw en lugar de 100vw
+        // para reducir la chance de que nazcan pegados al borde derecho.
+        petalo.style.left = Math.random() * 95 + "vw"; 
+        
         petalo.style.animationDuration = (4 + Math.random()*4) + "s";
         petalo.style.opacity = 0.6 + Math.random()*0.4;
 
@@ -176,19 +184,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
