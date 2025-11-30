@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparando Fracciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Kalam:wght@700&family=Lilita+One&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.8s ease;
+        }
+        /* Colores de fondo para cada nivel */
+        body.level-1 { background-color: #f0f9ff; } /* sky-50 */
+        body.level-2 { background-color: #f0fdf4; } /* green-50 */
+        body.level-3 { background-color: #fefce8; } /* yellow-50 */
+        body.level-4 { background-color: #fff7ed; } /* orange-50 */
+        body.level-5 { background-color: #fef2f2; } /* red-50 */
+
+        .kalam-font { font-family: 'Kalam', cursive; }
+        .pokemon-font { font-family: 'Lilita One', cursive; }
+
+        .card {
+            position: relative;
+            perspective: 1000px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-10px); }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card-front { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+        .card-back {
+            background-color: #ffffff;
+            border: 2px solid #e5e7eb;
+            transform: rotateY(180deg);
+            flex-direction: column;
+        }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .fraction-line {
+            width: 60%;
+            height: 4px;
+            background-color: #1f2937;
+            margin: 4px 0;
+            border-radius: 2px;
+        }
+        #modal { transition: opacity 0.3s ease; }
+        .modal-content {
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        body.modal-open .modal-content { transform: scale(1); }
+        #pizza-animation-container { font-size: 150px; }
+        #full-pizza { transition: transform 0.5s ease-out, opacity 0.5s ease-out; }
+        .pizza-slice {
+            position: absolute;
+            transition: transform 0.8s cubic-bezier(0.5, -0.5, 0.5, 1.5), opacity 0.5s ease-in;
+            opacity: 0;
+        }
+        /* Estilos para centrar las cartas */
+        #card-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .card-order-overlay {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #3b82f6;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .card.selected .card-order-overlay {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="text-gray-800 flex items-center justify-center min-h-screen p-4 level-1">
+
+    <div id="game-container" class="w-full max-w-4xl mx-auto text-center">
+        <header class="mb-6">
+            <h1 id="main-title" class="text-5xl md:text-6xl pokemon-font text-blue-600 tracking-wider">Comparando Fracciones</h1>
+            <p id="subtitle" class="text-lg text-gray-600 mt-2">Elige un modo de juego para empezar</p>
+        </header>
+
+        <div id="status-bar" class="mb-6 h-16 flex items-center justify-center"></div>
+        <main id="card-area" class="gap-4 md:gap-6 min-h-[280px] md:min-h-[220px]"></main>
+        <footer id="controls" class="mt-8 h-16 flex items-center justify-center">
+            <button id="next-round-btn" class="hidden bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-xl">
+                Siguiente Ronda
+            </button>
+            <button id="check-order-btn" class="hidden bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-xl">
+                Verificar Orden
+            </button>
+        </footer>
+        <div id="message-area" class="mt-4 h-8 text-2xl font-semibold"></div>
+    </div>
+
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="modal-content bg-white p-8 rounded-2xl shadow-2xl text-center w-full max-w-md">
+            <h2 id="modal-title" class="text-3xl kalam-font font-bold mb-4"></h2>
+            <p id="modal-text" class="text-gray-600 mb-6"></p>
+            <div id="modal-buttons" class="flex flex-col space-y-4"></div>
+        </div>
+    </div>
+    
+    <div id="pizza-animation-container" class="hidden fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+        <div id="full-pizza" class="relative">🍕</div>
+        <div id="pizza-slice-1" class="pizza-slice">🍕</div>
+        <div id="pizza-slice-2" class="pizza-slice">🍕</div>
+        <div id="pizza-slice-3" class="pizza-slice">🍕</div>
+    </div>
+
+    <footer class="fixed bottom-0 right-0 p-4 z-10 pointer-events-none">
+        <div class="bg-black bg-opacity-20 backdrop-blur-sm inline-block px-4 py-2 rounded-xl">
+            <p class="text-white text-sm font-semibold tracking-wide">Comparando fracciones</p>
+            <p class="text-gray-200 text-xs">Creado por Prof. Pablo Capettini</p>
+        </div>
+    </footer>
+
+
+    <script>
+        // --- CONFIG & POOLS ---
+        const fractionPools = {
+            1: [{n:1,d:4},{n:3,d:4},{n:1,d:3},{n:2,d:3},{n:1,d:5},{n:2,d:5},{n:3,d:5},{n:4,d:5},{n:1,d:8},{n:3,d:8},{n:5,d:8},{n:7,d:8},{n:2,d:6},{n:5,d:6}],
+            2: [{n:1,d:2},{n:1,d:3},{n:1,d:4},{n:2,d:3},{n:2,d:5},{n:2,d:7},{n:3,d:4},{n:3,d:5},{n:3,d:8},{n:4,d:5},{n:4,d:9},{n:5,d:6},{n:5,d:12}],
+            3: [{n:5,d:4},{n:3,d:2},{n:7,d:5},{n:8,d:3},{n:6,d:6},{n:10,d:10},{n:7,d:8},{n:4,d:6},{n:5,d:3},{n:11,d:4},{n:9,d:9},{n:3,d:5}],
+            4: [{n:1,d:2},{n:3,d:4},{n:4,d:3},{n:5,d:5},{n:3,d:8},{n:8,d:3},{n:2,d:5},{n:5,d:2},{n:7,d:10},{n:10,d:7},{n:6,d:12},{n:12,d:6}],
+            5: [{n:4,d:2},{n:9,d:3},{n:10,d:5},{n:12,d:4},{n:7,d:2},{n:1,d:10},{n:15,d:5},{n:1,d:100},{n:8,d:8},{n:13,d:4},{n:11,d:3},{n:5,d:1}]
+        };
+        const guerraLevelConfig = {
+            1: {cards:2,rounds:5,pool:[...fractionPools[1],...fractionPools[2]]},2:{cards:2,rounds:5,pool:[...fractionPools[2],...fractionPools[3]]},
+            3: {cards:2,rounds:6,pool:[...fractionPools[1],...fractionPools[3],{n:3,d:3},{n:5,d:5}]},4:{cards:3,rounds:5,pool:[...fractionPools[1],...fractionPools[2],...fractionPools[3],...fractionPools[4]]},
+            5: {cards:5,rounds:4,pool:[...fractionPools[4],...fractionPools[5],...fractionPools[1]]}
+        };
+        const ordenandoLevelConfig = {
+            1: {cards:3, pool:[...fractionPools[1], ...fractionPools[2]]}, 2:{cards:4, pool:[...fractionPools[1], ...fractionPools[3]]},
+            3: {cards:4, pool:[...fractionPools[2], ...fractionPools[3], ...fractionPools[4]]}, 4:{cards:5, pool:[...fractionPools[1], ...fractionPools[2], ...fractionPools[3], ...fractionPools[4]]},
+            5: {cards:6, pool:[...fractionPools[1], ...fractionPools[2], ...fractionPools[3], ...fractionPools[4], ...fractionPools[5]]}
+        };
+        
+        // --- DOM ELEMENTS ---
+        const cardArea=document.getElementById("card-area"),nextRoundBtn=document.getElementById("next-round-btn"),checkOrderBtn=document.getElementById("check-order-btn"),messageArea=document.getElementById("message-area"),statusBar=document.getElementById("status-bar"),modal=document.getElementById("modal"),modalTitle=document.getElementById("modal-title"),modalText=document.getElementById("modal-text"),modalButtons=document.getElementById("modal-buttons"),subtitle=document.getElementById("subtitle");
+
+        // --- GAME STATE ---
+        let gameMode,currentLevel,roundsWon,lives,currentCards,canPlay,playerOrder;
+
+        // --- MODAL & ANIMATIONS ---
+        function showModal(title, text, buttons) {
+            modalTitle.textContent = title;
+            modalText.textContent = text;
+            modalButtons.innerHTML = '';
+            buttons.forEach(btnInfo => {
+                const button = document.createElement('button');
+                button.textContent = btnInfo.text;
+                button.className = btnInfo.class || 'bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-xl';
+                button.onclick = () => {
+                    modal.classList.add('hidden');
+                    document.body.classList.remove('modal-open');
+                    btnInfo.callback();
+                };
+                modalButtons.appendChild(button);
+            });
+            modal.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        }
+
+        function playIntroAnimation(callback) {
+            statusBar.style.visibility='hidden';
+            lives=3;updateStatusBar();
+            const livesIcons=statusBar.querySelectorAll(".life-icon"),targets=Array.from(livesIcons).map(icon=>icon.getBoundingClientRect()),container=document.getElementById("pizza-animation-container"),fullPizza=document.getElementById("full-pizza"),slices=[document.getElementById("pizza-slice-1"),document.getElementById("pizza-slice-2"),document.getElementById("pizza-slice-3")];
+            container.classList.remove("hidden");fullPizza.style.transform="scale(1)";fullPizza.style.opacity="1";
+            setTimeout(()=>{
+                fullPizza.style.transform="scale(1.5)";fullPizza.style.opacity="0";
+                slices.forEach((slice,i)=>{slice.style.opacity="1";const a=i*120-90,x=Math.cos(a*Math.PI/180)*70,y=Math.sin(a*Math.PI/180)*70;slice.style.transform=`translate(${x}px, ${y}px) rotate(${i*20-20}deg)`})
+            },800);
+            setTimeout(()=>{
+                slices.forEach((slice,i)=>{const t=targets[i],x=t.left+t.width/2-window.innerWidth/2,y=t.top+t.height/2-window.innerHeight/2;slice.style.transform=`translate(${x}px, ${y}px) scale(0.3)`;slice.style.opacity="0"})
+            },1500);
+            setTimeout(()=>{
+                container.classList.add("hidden");statusBar.style.visibility="visible";fullPizza.style.transform="";fullPizza.style.opacity="";slices.forEach(s=>{s.style.transform="";s.style.opacity=""});
+                callback();
+            },2300)
+        }
+        
+        // --- GAME START & MODE SELECTION ---
+        function selectGameMode() {
+            showModal("Elige tu desafío", "Selecciona un modo de juego para poner a prueba tus habilidades con las fracciones.", [
+                {text: "Guerra de Fracciones", callback: () => initializeGame('guerra')},
+                {text: "Ordenando Fracciones", callback: () => initializeGame('ordenando'), class: 'bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-xl'}
+            ]);
+        }
+        
+        function initializeGame(mode) {
+            gameMode = mode;
+            currentLevel = 1; // FIX: Set currentLevel before animations that need it
+            if (mode === 'guerra') {
+                subtitle.textContent = "Elige la carta con la fracción mayor";
+                playIntroAnimation(() => startGuerraLevel(1));
+            } else { // ordenando
+                subtitle.textContent = "Ordena las cartas de menor a mayor";
+                startOrdenandoLevel(1);
+            }
+        }
+
+        // --- SHARED FUNCTIONS ---
+        function setBackgroundColor(level) {
+            for (let i=1;i<=5;i++) document.body.classList.remove(`level-${i}`);
+            document.body.classList.add(`level-${level}`);
+        }
+
+        function createCardElement(fraction) {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'card h-48 md:h-56 w-36';
+            cardWrapper.dataset.value = fraction.value;
+            cardWrapper.innerHTML = `<div class="card-inner"><div class="card-front"><svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white opacity-70" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></div><div class="card-back"><span class="text-5xl font-bold">${fraction.num}</span><div class="fraction-line"></div><span class="text-5xl font-bold">${fraction.den}</span></div></div>`;
+            if (gameMode === 'ordenando') {
+                const orderOverlay = document.createElement('div');
+                orderOverlay.className = 'card-order-overlay';
+                cardWrapper.appendChild(orderOverlay);
+                cardWrapper.addEventListener('click', handleOrdenandoCardClick);
+            } else {
+                cardWrapper.addEventListener('click', handleGuerraCardClick);
+            }
+            cardArea.appendChild(cardWrapper);
+        }
+
+        function getUniqueFractions(pool, count) {
+            const shuffled = [...pool].sort(()=>0.5-Math.random());
+            const selected = [];
+            const seen = new Set();
+            for(const frac of shuffled){
+                const val = frac.n / frac.d;
+                if(!seen.has(val)){selected.push(frac);seen.add(val);}
+                if(selected.length === count) break;
+            }
+            return selected.map(f => ({num: f.n, den: f.d, value: f.n / f.d}));
+        }
+
+        function updateStatusBar() {
+            let content = '';
+            if (gameMode === 'guerra') {
+                const config = guerraLevelConfig[currentLevel];
+                content = `<div class="flex items-center justify-between w-full max-w-lg bg-white p-3 rounded-xl shadow"><div class="font-bold text-xl text-blue-600">Nivel: ${currentLevel}</div><div class="flex items-center space-x-2"><span class="font-semibold hidden sm:inline">Progreso:</span><div class="flex space-x-1.5">${Array.from({length:config.rounds}).map((_,i)=>`<div class="w-6 h-6 rounded-full ${i<roundsWon?'bg-green-400':'bg-gray-200'} border-2 ${i<roundsWon?'border-green-500':'border-gray-300'}"></div>`).join('')}</div></div><div class="flex items-center space-x-1 text-2xl">${Array.from({length:3}).map((_,i)=>`<span class="life-icon" style="opacity:${i<lives?1:0.2};">🍕</span>`).join('')}</div></div>`;
+            } else { // ordenando
+                 content = `<div class="flex items-center justify-between w-full max-w-lg bg-white p-3 rounded-xl shadow"><div class="font-bold text-xl text-blue-600">Nivel: ${currentLevel}</div><div class="flex items-center space-x-1 text-2xl">${Array.from({length:lives}).map(()=>`<span>🍕</span>`).join('')}</div></div>`;
+            }
+            statusBar.innerHTML = content;
+        }
+        
+        // --- GUERRA DE FRACCIONES ---
+        function startGuerraLevel(level) {
+            currentLevel=level;roundsWon=0;lives=3;
+            setBackgroundColor(level);updateStatusBar();nextGuerraRound();
+        }
+        function nextGuerraRound() {
+            canPlay=true;messageArea.textContent='';nextRoundBtn.classList.add('hidden');cardArea.innerHTML='';
+            const config = guerraLevelConfig[currentLevel];
+            currentCards = getUniqueFractions(config.pool, config.cards);
+            currentCards.forEach(createCardElement);
+            setTimeout(()=>document.querySelectorAll('.card').forEach(c=>c.classList.add('flipped')), 500);
+        }
+        function handleGuerraCardClick(e) {
+            if(!canPlay)return;canPlay=false;
+            const selectedCard=e.currentTarget,selectedValue=parseFloat(selectedCard.dataset.value),maxVal=Math.max(...currentCards.map(c=>c.value)),allCards=document.querySelectorAll('.card');
+            if(selectedValue===maxVal){
+                messageArea.textContent='¡Correcto! 🎉';messageArea.className='mt-4 h-8 text-2xl font-semibold text-green-600';
+                selectedCard.querySelector('.card-back').style.borderColor='#10B981';selectedCard.querySelector('.card-back').style.borderWidth='4px';
+                roundsWon++;
+            }else{
+                messageArea.textContent='¡Incorrecto! 😥';messageArea.className='mt-4 h-8 text-2xl font-semibold text-red-600';
+                selectedCard.querySelector('.card-back').style.borderColor='#EF4444';selectedCard.querySelector('.card-back').style.borderWidth='4px';
+                if(roundsWon>0){roundsWon--}else{lives--}
+                allCards.forEach(card=>{if(parseFloat(card.dataset.value)===maxVal){card.querySelector('.card-back').style.borderColor='#10B981';card.querySelector('.card-back').style.borderWidth='4px'}});
+            }
+            updateStatusBar();
+            setTimeout(()=>{
+                if(lives<=0) showModal('¡Has perdido!','Te quedaste sin porciones de pizza. ¡Pero no te rindas!',[{text:'Jugar de Nuevo',callback:selectGameMode}]);
+                else checkGuerraLevelProgression();
+            }, 1500);
+        }
+        function checkGuerraLevelProgression(){
+            const config=guerraLevelConfig[currentLevel];
+            if(roundsWon>=config.rounds){
+                if(currentLevel<5) showModal(`¡Nivel ${currentLevel} Superado!`,'¡Excelente trabajo! Ahora el desafío aumenta.',[{text:`Ir al Nivel ${currentLevel+1}`,callback:()=>startGuerraLevel(currentLevel+1)}]);
+                else showModal('🏆 ¡CAMPEÓN! 🏆','¡Has conquistado el modo Guerra de Fracciones!',[{text:'Elegir otro modo',callback:selectGameMode}]);
+            }else{nextRoundBtn.classList.remove('hidden')}
+        }
+
+        // --- ORDENANDO FRACCIONES ---
+        function startOrdenandoLevel(level) {
+            currentLevel = level;
+            if (level === 1) lives = 1;
+            else lives++; // Gana una vida al pasar de nivel
+            setBackgroundColor(level);
+            updateStatusBar();
+            nextOrdenandoRound();
+        }
+        function nextOrdenandoRound() {
+            canPlay = true; playerOrder = [];
+            messageArea.textContent = ''; cardArea.innerHTML = '';
+            checkOrderBtn.classList.add('hidden');
+            const config = ordenandoLevelConfig[currentLevel];
+            currentCards = getUniqueFractions(config.pool, config.cards);
+            currentCards.forEach(createCardElement);
+            setTimeout(()=>document.querySelectorAll('.card').forEach(c=>c.classList.add('flipped')), 500);
+        }
+        function handleOrdenandoCardClick(e) {
+            if (!canPlay) return;
+            const selectedCard = e.currentTarget;
+            if (selectedCard.classList.contains('selected')) return;
+
+            selectedCard.classList.add('selected');
+            playerOrder.push(parseFloat(selectedCard.dataset.value));
+            selectedCard.querySelector('.card-order-overlay').textContent = playerOrder.length;
+
+            if (playerOrder.length === currentCards.length) {
+                canPlay = false;
+                checkOrderBtn.classList.remove('hidden');
+            }
+        }
+        function checkPlayerOrder() {
+            checkOrderBtn.classList.add('hidden');
+            const correctOrder = [...currentCards].sort((a,b) => a.value - b.value).map(c => c.value);
+            const isCorrect = JSON.stringify(playerOrder) === JSON.stringify(correctOrder);
+
+            if (isCorrect) {
+                messageArea.textContent = '¡Orden Correcto! 🎉';
+                messageArea.className = 'mt-4 h-8 text-2xl font-semibold text-green-600';
+                setTimeout(() => {
+                    if (currentLevel < 5) {
+                        showModal(`¡Nivel ${currentLevel} Superado!`, `¡Muy bien! Ganaste una vida extra. Prepárate para el siguiente nivel.`, [{text:`Ir al Nivel ${currentLevel + 1}`, callback:()=>startOrdenandoLevel(currentLevel + 1)}]);
+                    } else {
+                        showModal('🏆 ¡MAESTRO DEL ORDEN! 🏆', '¡Has conquistado el modo Ordenando Fracciones!', [{text:'Elegir otro modo', callback: selectGameMode}]);
+                    }
+                }, 1500);
+            } else {
+                lives--;
+                updateStatusBar();
+                messageArea.textContent = '¡Orden Incorrecto! 😥';
+                messageArea.className = 'mt-4 h-8 text-2xl font-semibold text-red-600';
+                
+                // Muestra el orden correcto
+                 const allCards = Array.from(document.querySelectorAll('.card'));
+                 correctOrder.forEach((val, index) => {
+                     const card = allCards.find(c => parseFloat(c.dataset.value) === val);
+                     if (card) {
+                         const overlay = card.querySelector('.card-order-overlay');
+                         overlay.textContent = index + 1;
+                         overlay.style.backgroundColor = '#10B981'; // green
+                         card.classList.add('selected');
+                     }
+                 });
+
+                setTimeout(() => {
+                    if (lives <= 0) {
+                        showModal('¡Has perdido!', 'Te quedaste sin vidas. ¡Pero no te rindas!', [{text:'Jugar de Nuevo', callback: selectGameMode}]);
+                    } else {
+                        showModal('¡Inténtalo de nuevo!', 'El orden no era el correcto. ¡Concéntrate y vuelve a empezar la ronda!', [{text:'Continuar', callback: nextOrdenandoRound}]);
+                    }
+                }, 2500);
+            }
+        }
+
+        // --- INICIO ---
+        nextRoundBtn.addEventListener('click', nextGuerraRound);
+        checkOrderBtn.addEventListener('click', checkPlayerOrder);
+        document.addEventListener('DOMContentLoaded', selectGameMode);
+    </script>
+</body>
+</html>
+
+

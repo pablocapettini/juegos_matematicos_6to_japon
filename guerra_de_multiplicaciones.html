@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guerra de Multiplicaciones</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body.level-1 { background-color: #f0f9ff; } /* celeste */
+    body.level-2 { background-color: #f0fdf4; } /* verde */
+    body.level-3 { background-color: #fefce8; } /* amarillo */
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 level-1">
+
+  <div class="w-full max-w-xl text-center bg-white rounded-xl shadow-lg p-6">
+    <h1 class="text-3xl font-bold text-purple-600 mb-4">⚔️ Guerra de Multiplicaciones</h1>
+    <p class="text-lg text-gray-600 mb-4">Elige la multiplicación con el resultado mayor</p>
+
+    <div id="status" class="mb-6 text-lg font-semibold text-gray-700">
+      Nivel: <span id="level">1</span> | 
+      Ronda: <span id="round">1</span>/<span id="maxRounds">3</span> | 
+      Vidas: <span id="lives">3</span>
+    </div>
+
+    <div id="cards" class="grid grid-cols-2 gap-6 mb-6"></div>
+
+    <p id="message" class="text-xl font-bold"></p>
+
+    <button id="next" class="hidden mt-6 px-6 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600">
+      Siguiente
+    </button>
+  </div>
+
+  <script>
+    const cardsEl = document.getElementById("cards");
+    const messageEl = document.getElementById("message");
+    const nextBtn = document.getElementById("next");
+    const roundEl = document.getElementById("round");
+    const maxRoundsEl = document.getElementById("maxRounds");
+    const livesEl = document.getElementById("lives");
+    const levelEl = document.getElementById("level");
+
+    let level = 1;
+    let round = 1;
+    let lives = 3;
+    let maxRounds = 3;
+    let currentCards = [];
+
+    // Genera multiplicación aleatoria
+    function randomMultiplication(level) {
+      let max = level === 1 ? 6 : level === 2 ? 9 : 12;
+      const a = Math.floor(Math.random() * max) + 1;
+      const b = Math.floor(Math.random() * max) + 1;
+      return { a, b, value: a * b };
+    }
+
+    function startRound() {
+      messageEl.textContent = "";
+      nextBtn.classList.add("hidden");
+      cardsEl.innerHTML = "";
+
+      let cardCount = level === 1 ? 2 : level === 2 ? 3 : 4;
+
+      currentCards = [];
+      while (currentCards.length < cardCount) {
+        const mult = randomMultiplication(level);
+        if (!currentCards.some(c => c.value === mult.value)) {
+          currentCards.push(mult);
+        }
+      }
+
+      currentCards.forEach(mult => {
+        const card = document.createElement("div");
+        card.className = "bg-purple-100 rounded-xl shadow p-6 cursor-pointer hover:scale-105 transition transform";
+        card.innerHTML = `
+          <div class="text-4xl font-bold">${mult.a} × ${mult.b}</div>
+        `;
+        card.onclick = () => checkAnswer(mult.value, card);
+        cardsEl.appendChild(card);
+      });
+
+      roundEl.textContent = round;
+      livesEl.textContent = lives;
+      levelEl.textContent = level;
+      maxRoundsEl.textContent = maxRounds;
+    }
+
+    function checkAnswer(value, card) {
+      const maxVal = Math.max(...currentCards.map(c => c.value));
+
+      if (value === maxVal) {
+        messageEl.textContent = "✅ Correcto!";
+        messageEl.className = "text-xl font-bold text-green-600";
+        card.classList.add("border-4", "border-green-500");
+      } else {
+        messageEl.textContent = "❌ Incorrecto!";
+        messageEl.className = "text-xl font-bold text-red-600";
+        card.classList.add("border-4", "border-red-500");
+        lives--;
+        livesEl.textContent = lives;
+
+        // marcar la correcta
+        document.querySelectorAll("#cards > div").forEach(c => {
+          const val = eval(c.textContent.replace("×", "*"));
+          if (val === maxVal) {
+            c.classList.add("border-4", "border-green-500");
+          }
+        });
+      }
+
+      if (lives <= 0) {
+        messageEl.textContent = "💀 Juego terminado";
+        nextBtn.classList.add("hidden");
+        return;
+      }
+
+      if (round >= maxRounds) {
+        if (level < 3) {
+          messageEl.textContent = `🎉 Nivel ${level} completado`;
+          nextBtn.textContent = "Pasar al siguiente nivel";
+          nextBtn.classList.remove("hidden");
+        } else {
+          messageEl.textContent = "🏆 ¡Ganaste todos los niveles!";
+          nextBtn.classList.add("hidden");
+        }
+      } else {
+        nextBtn.textContent = "Siguiente Ronda";
+        nextBtn.classList.remove("hidden");
+      }
+    }
+
+    nextBtn.addEventListener("click", () => {
+      if (round >= maxRounds) {
+        level++;
+        round = 1;
+        lives = 3;
+        maxRounds = level === 2 ? 4 : 5;
+
+        document.body.className = `level-${level} flex items-center justify-center min-h-screen p-4`;
+      } else {
+        round++;
+      }
+      startRound();
+    });
+
+    // Iniciar juego
+    startRound();
+  </script>
+</body>
+</html>
