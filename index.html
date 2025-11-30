@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Juegos Matemáticos</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+JP:wght@300;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 
@@ -13,28 +14,32 @@
         padding: 0;
     }
 
+    /* FIX DE VIBRACIÓN: Aplicar overflow hidden al html y body para asegurar */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+    }
+
     body {
         font-family: "Inter", sans-serif;
         padding: 40px 20px;
         text-align: center;
         color: #2c2c2c;
         transition: 0.3s;
+        min-height: 100vh; /* Asegura que cubra la pantalla */
 
-        /* FONDO LOCAL APLICADO CORRECTAMENTE */
+        /* FONDO */
         background: url("fondo.jpg") center/cover fixed no-repeat;
-        backdrop-filter: blur(2px);
-
-        /* --- CORRECCIÓN AQUÍ --- */
-        /* Esto evita que aparezca la barra de desplazamiento horizontal */
-        overflow-x: hidden; 
-        width: 100%;
+        /* IMPORTANTE: Quité 'backdrop-filter' porque eso causaba la lentitud */
     }
-
 
     /* ------- MODO OSCURO -------- */
     body.dark {
         color: #eee;
-        background: #0f0f0f;
+        background-color: #0f0f0f; /* Color de respaldo si falla la imagen */
+        /* En modo oscuro oscurecemos un poco la imagen de fondo */
+        background-blend-mode: overlay; 
     }
 
     body.dark .menu a {
@@ -47,13 +52,6 @@
         color: white;
     }
 
-    /* ----------- ENCABEZADO TORII ---------- */
-    .torii {
-        width: 120px;
-        opacity: 0.9;
-        margin-bottom: 10px;
-    }
-
     h1 {
         font-family: "Poppins", sans-serif;
         font-size: 42px;
@@ -61,15 +59,20 @@
         color: #b30000;
         font-weight: 700;
         letter-spacing: 1px;
+        text-shadow: 2px 2px 4px rgba(255,255,255,0.7); /* Ayuda a leer sobre el fondo */
     }
-
 
     .sub {
         font-family: "Noto Sans JP", sans-serif;
         font-size: 20px;
-        font-style: normal;
         margin-bottom: 35px;
         color: #444;
+        font-weight: 500;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
+    }
+    
+    body.dark .sub, body.dark h1 {
+         text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
     }
 
     /* ----------- MENÚ DOS COLUMNAS ----------- */
@@ -78,12 +81,11 @@
         grid-template-columns: repeat(2, 1fr);
         max-width: 500px;
         gap: 18px;
-        margin-left: auto;     
-        margin-right: 80px;    
+        /* Centrado automático del menú, es más seguro que usar margins manuales */
+        margin: 0 auto; 
         z-index: 10;
         position: relative;
     }
-
 
     .menu a {
         display: block;
@@ -94,33 +96,46 @@
         border-radius: 8px;
         font-size: 18px;
         font-weight: normal;
-        transition: 0.2s;
+        transition: transform 0.2s, background 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
-
 
     .menu a:hover {
         background: #b30000;
         color: white;
         transform: translateY(-4px);
-        box-shadow: 0 4px 10px #00000055;
+        box-shadow: 0 8px 15px rgba(0,0,0,0.3);
     }
 
-    /* ----------- ANIMACIÓN DE PÉTALOS ----------- */
-    .petalo {
+    /* ----------- CONTENEDOR DE PÉTALOS (NUEVO) ----------- */
+    /* Esto aísla la animación del resto de la página para que no vibre */
+    #contenedor-petalos {
         position: fixed;
-        top: -20px; /* Ajusté un poco esto para que nazcan más arriba */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden; /* Corta cualquier pétalo que se salga */
+        pointer-events: none; /* Permite hacer clic a través de los pétalos */
+        z-index: 9999; /* Por encima de todo, pero no bloquea clics gracias a pointer-events */
+    }
+
+    .petalo {
+        position: absolute; /* Absolute respecto al contenedor fijo */
+        top: -30px;
         width: 18px;
         height: 18px;
-        background: pink;
+        background: #ffb7c5; /* Color rosa cerezo */
         border-radius: 70% 30% 70% 30%;
-        opacity: 0.75;
+        opacity: 0.8;
         animation: caer linear infinite;
-        z-index: -1; /* Esto asegura que los pétalos no tapen los clics del menú */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
     @keyframes caer {
-        0%   { transform: translateY(-10px) rotate(0deg); }
-        100% { transform: translateY(110vh) rotate(360deg); }
+        0%   { transform: translateY(0) rotate(0deg) translateX(0); }
+        /* Agregué un leve movimiento lateral (translateX) para hacerlo más natural */
+        100% { transform: translateY(110vh) rotate(360deg) translateX(20px); }
     }
 
     /* ----------- BOTÓN MODO OSCURO ----------- */
@@ -135,19 +150,19 @@
         border-radius: 8px;
         cursor: pointer;
         font-weight: 600;
-        box-shadow: 0 3px 8px #00000044;
-        z-index: 100; /* Asegura que el botón esté siempre encima */
+        box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        z-index: 10000;
     }
 </style>
 
 </head>
 <body>
 
+<div id="contenedor-petalos"></div>
+
 <button class="toggle" onclick="document.body.classList.toggle('dark')">
     夜 / Luz
 </button>
-
-
 
 <h1>Menú de Juegos</h1>
 <div class="sub">Juegos creados por 6° grado de la Escuela 9 DE. 7 "Japón"</div>
@@ -163,23 +178,34 @@
 </div>
 
 <script>
+    const contenedor = document.getElementById("contenedor-petalos");
+
     function crearPetalo(){
         const petalo = document.createElement("div");
         petalo.classList.add("petalo");
         
-        // CORRECCIÓN ADICIONAL: Generar hasta 95vw en lugar de 100vw
-        // para reducir la chance de que nazcan pegados al borde derecho.
-        petalo.style.left = Math.random() * 95 + "vw"; 
+        // Posición aleatoria
+        petalo.style.left = Math.random() * 100 + "%";
         
-        petalo.style.animationDuration = (4 + Math.random()*4) + "s";
-        petalo.style.opacity = 0.6 + Math.random()*0.4;
+        // Velocidad aleatoria
+        petalo.style.animationDuration = (5 + Math.random() * 5) + "s";
+        
+        // Tamaño aleatorio para variedad
+        const size = 15 + Math.random() * 10;
+        petalo.style.width = size + "px";
+        petalo.style.height = size + "px";
 
-        document.body.appendChild(petalo);
+        // AGREGAR AL CONTENEDOR, NO AL BODY
+        contenedor.appendChild(petalo);
 
-        setTimeout(()=> petalo.remove(), 8000);
+        // Eliminar después de que termine la animación
+        setTimeout(() => {
+            petalo.remove();
+        }, 10000); 
     }
 
-    setInterval(crearPetalo, 350);
+    // Intervalo un poco más relajado (400ms) para mejorar rendimiento
+    setInterval(crearPetalo, 400);
 </script>
 
 </body>
