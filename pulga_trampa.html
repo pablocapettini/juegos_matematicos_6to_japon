@@ -287,26 +287,26 @@ document.addEventListener("keydown",e=>{
 <footer style="text-align:center; margin-top:20px; padding:10px; background-color:#f0f0f0;">
     Hecho por Gaby🐜, Amira🐜 y Priscila🐜 de 6° grado de "La Japón" - 2025
 </footer>
-  <a href="index.html" class="btn-volver">
+<a href="index.html" class="btn-volver">
     ⬅ Volver al Menú
 </a>
 
 <style>
     .btn-volver {
         position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 999999; /* <--- ESTO ES LO IMPORTANTE (Nivel muy alto) */
+        bottom: 20px;  /* <--- CAMBIO AQUÍ: Ahora se pega al fondo */
+        left: 20px;    /* Se mantiene a la izquierda */
+        z-index: 999999;
         
         background-color: #1976d2;
         color: white;
         text-decoration: none;
-        padding: 12px 24px; /* Un poco más grande para que se vea bien */
-        border-radius: 50px; /* Bordes bien redondos */
+        padding: 12px 24px;
+        border-radius: 50px;
         font-family: sans-serif;
         font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5); /* Sombra fuerte para resaltar */
-        border: 2px solid white; /* Borde blanco para que destaque del fondo */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        border: 2px solid white;
         transition: transform 0.2s;
     }
 
@@ -317,4 +317,5 @@ document.addEventListener("keydown",e=>{
 </style>
 </body>
 </html>
+
 
