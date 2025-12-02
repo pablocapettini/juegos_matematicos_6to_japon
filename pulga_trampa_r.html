@@ -6,7 +6,7 @@
 <title>Las Pulgas y la Trampa 🐜🎮</title>
 
 <style>
-  /* --- ESTILOS GENERALES --- */
+  /* --- ESTILOS BASE --- */
   body {
     font-family: "Comic Sans MS", "Comic Sans", cursive, sans-serif;
     background: linear-gradient(135deg, #f8c8dc, #c7d9ff, #b8e0d2);
@@ -17,6 +17,48 @@
     flex-direction: column;
     align-items: center;
     color: #333;
+    overflow-y: auto; /* Asegura que se pueda bajar si la pantalla es chica */
+  }
+
+  /* --- BARRA SUPERIOR (Cabecera) --- */
+  header {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(5px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #800020;
+    line-height: 1.2;
+  }
+
+  #btnReiniciar {
+    background: #ff6b81;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+    text-transform: uppercase;
+  }
+  #btnReiniciar:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
   }
 
   /* --- CONTENEDOR PRINCIPAL --- */
@@ -32,131 +74,89 @@
     flex: 1;
   }
 
-  /* --- BARRA SUPERIOR (Título y Botón Menú) --- */
-  #top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    margin-bottom: 5px;
-    background: rgba(255,255,255,0.4);
-    padding: 10px 15px;
-    border-radius: 15px;
-    box-sizing: border-box;
-  }
-
-  h1 {
-    color: #800020;
-    margin: 0;
-    font-size: 1.2rem; /* Un poco más chico en móvil para que entre todo */
-    text-align: left;
-    line-height: 1.2;
-  }
-
-  /* Botón de Menú/Reiniciar arriba */
-  #btnMenu {
-    background: #ff8fa3;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    color: white;
-    font-weight: bold;
-    font-size: 0.9rem;
-    cursor: pointer;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
-    white-space: nowrap; /* Evita que el texto se rompa */
-    margin-left: 10px;
-  }
-  
-  #btnMenu:active {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
-  }
-
-  /* --- PANEL DE MENSAJES --- */
-  #panel {
-    width: 100%;
+  /* --- ZONA DE MENSAJES Y NIVELES --- */
+  #panel-control {
     text-align: center;
+    width: 100%;
   }
 
   #mensaje {
-    font-size: 1rem;
-    margin-bottom: 10px;
-    background: rgba(255, 255, 255, 0.7);
+    background: white;
     padding: 10px;
     border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 10px;
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-height: 40px; /* Para que no salte si cambia el texto */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  /* --- BOTONES DE NIVEL --- */
   #niveles {
     display: flex;
     justify-content: center;
-    flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
   }
 
-  #niveles button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 12px;
+  .btn-nivel {
     background: #c7d9ff;
-    cursor: pointer;
-    font-size: 1rem;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 10px;
     font-weight: bold;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    font-size: 0.95rem;
     font-family: inherit;
   }
+  .btn-nivel:active { transform: translateY(2px); box-shadow: none; }
 
-  #niveles button:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 rgba(0,0,0,0.1);
-  }
-
-  /* --- TABLERO RESPONSIVE --- */
+  /* --- TABLERO --- */
   #tablero {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
     gap: 4px;
-    justify-content: center;
-    margin: 0 auto;
     width: 100%;
-    max-width: 550px;
+    max-width: 500px; /* Tamaño ideal en PC */
+    margin: 0 auto;
+    background: rgba(255,255,255,0.3);
+    padding: 5px;
+    border-radius: 10px;
   }
 
   .casilla {
-    aspect-ratio: 1 / 1; 
+    aspect-ratio: 1; /* Cuadrados perfectos */
     background: #fffafc;
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
     font-size: 0.8rem;
-    border: 1px solid #aaa;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.25s, background 0.3s;
+    font-weight: bold;
+    color: #555;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.05);
   }
 
-  /* Ajuste para pantallas MUY pequeñas */
+  /* En pantallas muy chicas (iPhone SE), achicamos la fuente */
   @media (max-width: 360px) {
-    .casilla { font-size: 0.6rem; border-radius: 4px; }
-    #tablero { gap: 2px; }
-    h1 { font-size: 1rem; }
+    .casilla { font-size: 0.6rem; }
   }
 
   .pulga {
     background: #b8e0d2 !important;
     border: 2px solid #7cc1a3;
-    animation: saltar 0.35s ease-in-out;
-    z-index: 2;
+    animation: saltar 0.3s ease-out;
+    z-index: 10;
+    color: #000;
   }
 
   @keyframes saltar {
-    0% { transform: translateY(0); }
-    50% { transform: translateY(-10px) scale(1.2); }
-    100% { transform: translateY(0); }
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); box-shadow: 0 5px 10px rgba(0,0,0,0.2); }
+    100% { transform: scale(1); }
   }
 
   .trampa {
@@ -166,13 +166,12 @@
   }
 
   #vidas {
-    margin-top: 10px;
-    font-size: 1.2em;
+    font-size: 1.2rem;
     font-weight: bold;
-    color: #444;
+    margin-top: 5px;
   }
 
-  /* --- BOTONERA DE SALTOS (CONTROLES) --- */
+  /* --- BOTONERA DE SALTOS --- */
   #botonera {
     display: flex;
     flex-wrap: wrap;
@@ -180,95 +179,254 @@
     gap: 8px;
     width: 100%;
     padding: 10px;
-    background: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.4);
     border-radius: 15px;
     margin-bottom: 20px;
   }
 
-  #botonera button {
+  .btn-salto {
     width: 45px;
     height: 45px;
-    border: none;
     border-radius: 50%;
+    border: none;
     background: #bcd3ff;
-    cursor: pointer;
-    font-size: 1em;
     font-weight: bold;
-    box-shadow: 0 3px 5px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
     font-family: inherit;
+    font-size: 1rem;
     transition: background 0.2s;
   }
-  
-  #botonera button:hover { background: #a3c2ff; }
-  #botonera button:active { background: #8baaff; transform: scale(0.95); }
+  .btn-salto:hover { background: #a8caff; }
+  .btn-salto:active { transform: scale(0.95); background: #8fb8ff; }
 
-  /* --- PIE DE PÁGINA --- */
+  /* --- FOOTER --- */
   footer {
     text-align: center;
-    padding: 15px;
-    background-color: rgba(240, 240, 240, 0.8);
-    width: 100%;
     font-size: 0.8rem;
+    padding: 15px;
+    background: rgba(255,255,255,0.6);
+    width: 100%;
     margin-top: auto;
   }
 
-  /* --- MEDIA QUERY: ESTILO PARA PC / TABLET GRANDE --- */
+  /* --- MODO ESCRITORIO (PC) --- */
   @media (min-width: 768px) {
     #contenedor {
       flex-direction: row;
       align-items: flex-start;
       justify-content: center;
-      gap: 40px;
+      gap: 30px;
       margin-top: 20px;
     }
     
-    #panel { max-width: 600px; }
-
-    /* En PC, ocultamos la barra superior simple y mostramos título centrado clásico si queremos, 
-       pero para mantener consistencia dejaremos la barra. Solo la ajustamos. */
-    #top-bar {
-      background: none;
-      box-shadow: none;
-      padding: 0;
-      margin-bottom: 20px;
-    }
-    
-    h1 { font-size: 1.8rem; }
+    #panel-control { max-width: 550px; }
 
     #botonera {
-      width: 120px; 
+      width: 120px;
       flex-direction: column;
       background: none;
-      margin-top: 80px; /* Bajarlo un poco */
+      padding: 0;
+      margin-top: 80px;
     }
     
-    #botonera button {
+    .btn-salto {
       width: 100%;
       height: auto;
-      padding: 10px;
-      border-radius: 12px; 
+      padding: 12px;
+      border-radius: 12px;
     }
   }
-
 </style>
 </head>
 
 <body>
 
+<header>
+  <h1>🐜 Pulgas & Trampas</h1>
+  <button id="btnReiniciar" onclick="reiniciarJuego()">↻ Reiniciar</button>
+</header>
+
 <div id="contenedor">
 
-  <div id="panel">
-    <div id="top-bar">
-        <h1>🐜 Las Pulgas</h1>
-        <button id="btnMenu" onclick="reiniciarJuego()">🏠 Menú</button>
-    </div>
-   
-    <div id="mensaje">Elegí un nivel para comenzar.</div>
+  <div id="panel-control">
+    
+    <div id="mensaje">👇 Seleccioná un nivel para empezar.</div>
 
     <div id="niveles">
-      <button onclick="seleccionarNivel('facil')">Fácil</button>
-      <button onclick="seleccionarNivel('medio')">Medio</button>
-      <button onclick="seleccionarNivel('dific
+      <button class="btn-nivel" onclick="seleccionarNivel('facil')">Fácil</button>
+      <button class="btn-nivel" onclick="seleccionarNivel('medio')">Medio</button>
+      <button class="btn-nivel" onclick="seleccionarNivel('dificil')">Difícil</button>
+    </div>
+
+    <div id="vidas">❤️ Vidas: <span id="vidasJ1">3</span></div>
+
+    <div id="tablero"></div>
+    
+  </div>
+
+  <div id="botonera"></div>
+
+</div>
+
+<footer>
+    Hecho por Gaby🐜, Amira🐜 y Priscila🐜 de 6° grado de "La Japón" - 2025
+</footer>
+
+<script>
+/* --- VARIABLES DEL JUEGO --- */
+let totalCasillas = 61; // 0 al 60
+let trampas = [];
+let posicion = 0;
+let vidas = 3;
+let fase = "esperandoNivel"; 
+let nivel = null;
+let saltoFijo = null;
+let intervaloSalto = null;
+
+/* --- REFERENCIAS AL HTML --- */
+const tablero = document.getElementById("tablero");
+const mensaje = document.getElementById("mensaje");
+const v1 = document.getElementById("vidasJ1");
+const botonera = document.getElementById("botonera");
+
+/* --- INICIALIZACIÓN (ARRANQUE) --- */
+// Ejecutamos esto apenas carga la página para que NO se vea vacío
+crearTableroVacio();
+crearBotonesSalto();
+
+/* --- FUNCIONES --- */
+
+function crearTableroVacio(){
+  tablero.innerHTML = "";
+  for(let i=0; i<totalCasillas; i++){
+    const d = document.createElement("div");
+    d.className = "casilla";
+    d.textContent = i;
+    tablero.appendChild(d);
+  }
+}
+
+function crearBotonesSalto(){
+  botonera.innerHTML = "";
+  for(let i=1; i<=10; i++){
+    const b = document.createElement("button");
+    b.className = "btn-salto";
+    b.textContent = `x${i}`;
+    b.onclick = () => iniciarSaltos(i);
+    botonera.appendChild(b);
+  }
+}
+
+function seleccionarNivel(n){
+  nivel = n;
+  reiniciarVariables();
+  
+  fase = "botColoca";
+  mensaje.textContent = "🤖 El bot está escondiendo las trampas...";
+  
+  // Dibujamos el tablero limpio y ponemos la pulga en el 0
+  actualizarDibujoTablero(); 
+
+  // Simulamos que el bot piensa (1.2 segundos)
+  setTimeout(botColocaTrampas, 1200);
+}
+
+function reiniciarVariables(){
+  if(intervaloSalto) clearInterval(intervaloSalto);
+  vidas = 3;
+  posicion = 0;
+  saltoFijo = null;
+  trampas = [];
+  v1.textContent = vidas;
+}
+
+function botColocaTrampas(){
+  trampas = [];
+  let cantidad = nivel === "facil" ? 5 : nivel === "medio" ? 10 : 20;
+
+  while(trampas.length < cantidad){
+    const pos = Math.floor(Math.random() * totalCasillas);
+    // No poner trampa en el inicio (0) ni repetir
+    if(!trampas.includes(pos) && pos !== 0) {
+      trampas.push(pos);
+    }
+  }
+
+  mensaje.textContent = "¡Listo! Elegí un número para saltar (x1 - x10).";
+  fase = "jugadorSalta";
+  
+  // Nota: No mostramos las trampas todavía (son invisibles hasta caer en ellas o ganar?)
+  // Según tu código original, se veían las trampas. Si querés que sean secretas, avisame.
+  // Por ahora las muestro para que sea igual al original.
+  actualizarDibujoTablero();
+}
+
+function iniciarSaltos(valor){
+  if(fase !== "jugadorSalta") {
+    // Si tocan botones antes de elegir nivel
+    if(fase === "esperandoNivel") mensaje.textContent = "⚠️ ¡Primero elegí un nivel!";
+    return;
+  }
+
+  if(intervaloSalto) clearInterval(intervaloSalto);
+  saltoFijo = valor;
+  mensaje.textContent = `Saltando de a ${saltoFijo}... ¡Suerte!`;
+
+  // Inicia el salto automático cada 0.6 segundos
+  intervaloSalto = setInterval(ejecutarUnSalto, 600);
+}
+
+function ejecutarUnSalto(){
+  if(fase !== "jugadorSalta") return;
+
+  posicion += saltoFijo;
+
+  // Verificar si llegó al final
+  if(posicion >= totalCasillas - 1){
+    posicion = totalCasillas - 1;
+    actualizarDibujoTablero();
+    mensaje.textContent = "🎉 ¡GANASTE! Llegaste a la meta.";
+    mensaje.style.background = "#d4edda"; // Verde clarito
+    fase = "fin";
+    clearInterval(intervaloSalto);
+    return;
+  }
+
+  actualizarDibujoTablero();
+
+  // Verificar trampa
+  if(trampas.includes(posicion)){
+    vidas--;
+    v1.textContent = vidas;
+    mensaje.textContent = `💥 ¡PUM! Trampa. Te quedan ${vidas} vidas.`;
+    mensaje.style.background = "#f8d7da"; // Rojo clarito
+
+    if(vidas <= 0){
+      mensaje.textContent = "😵 Te quedaste sin vidas. Fin del juego.";
+      fase = "fin";
+      clearInterval(intervaloSalto);
+    }
+  }
+}
+
+function actualizarDibujoTablero(){
+  // Recorre todas las casillas y les pone la clase correcta
+  const casillas = document.querySelectorAll(".casilla");
+  casillas.forEach((c, i) => {
+    c.className = "casilla"; // Limpiar clases previas
+    
+    // Dibujar trampas (si querés ocultarlas, borrá esta línea)
+    if(trampas.includes(i)) c.classList.add("trampa");
+    
+    // Dibujar pulga
+    if(i === posicion) c.classList.add("pulga");
+  });
+}
+
+function reiniciarJuego(){
+  location.reload();
+}
+</script>
+</body>
+</html>
