@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Misión Tablas 6to</title>
+    <style>
+        :root {
+            --espacial-dark: #05070a;
+            --neon-blue: #00d2ff;
+            --neon-purple: #9d50bb;
+            --correct-green: #2ecc71;
+            --error-orange: #ff9f43;
+        }
+
+        body {
+            margin: 0; background: var(--espacial-dark);
+            color: white; font-family: 'Segoe UI', sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; overflow-y: auto; padding: 20px;
+        }
+
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+        .container {
+            width: 90%; max-width: 750px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid var(--neon-blue);
+            border-radius: 20px; padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+            text-align: center; position: relative;
+        }
+
+        .flash { animation: hyperdrive 0.4s ease-out; }
+        @keyframes hyperdrive {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; background: white; transform: scale(1.02); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        h1 { text-shadow: 0 0 15px var(--neon-blue); letter-spacing: 2px; margin-top: 0; }
+        
+        .input-estilo {
+            background: rgba(255,255,255,0.1); border: 2px solid white;
+            color: white; font-size: 1.5rem; padding: 12px;
+            border-radius: 10px; outline: none; margin: 10px; text-align: center;
+        }
+
+        .btn-principal {
+            background: linear-gradient(45deg, #00d2ff, #9d50bb);
+            color: white; padding: 15px 35px; border: none;
+            border-radius: 50px; font-size: 1.2rem; cursor: pointer;
+            font-weight: bold; transition: 0.3s;
+        }
+
+        .btn-principal:hover { transform: translateY(-3px); box-shadow: 0 0 20px var(--neon-blue); }
+
+        .pista-box {
+            background: rgba(157, 80, 187, 0.2);
+            border-left: 4px solid var(--neon-purple);
+            padding: 15px; margin: 20px 0; font-size: 1.1rem; min-height: 60px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .pregunta-texto { font-size: 4rem; margin: 20px 0; color: var(--neon-blue); font-weight: bold; }
+
+        .tabla-resultados {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            margin-top: 20px; background: rgba(255,255,255,0.05);
+            padding: 20px; border-radius: 15px;
+        }
+
+        .item-res { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; font-size: 0.9rem; }
+        .error { color: var(--error-orange); }
+        .acierto { color: var(--correct-green); }
+        .alerta-nombre { color: var(--error-orange); font-weight: bold; margin: 10px 0; display: none; }
+            
+        /* Animación de marcianos flotando */
+.marciano-animado {
+    position: fixed;
+    font-size: 50px;
+    z-index: 9999;
+    pointer-events: none;
+    animation: volarMarciano 4s linear forwards;
+}
+
+@keyframes volarMarciano {
+    0% { transform: translate(-100px, 100vh) rotate(0deg); opacity: 1; }
+    100% { transform: translate(110vw, -100px) rotate(360deg); opacity: 0; }
+}
+    </style>
+</head>
+<body>
+
+<canvas class="stars" id="canvasEstrellas"></canvas>
+
+<div class="container" id="main-container">
+    <div id="pantalla-inicio">
+        <div style="font-size: 50px;">👩‍🚀 👨‍🚀</div>
+        <h1>MISIÓN TABLAS 6°</h1>
+        <p>Ingresá tu nombre y apellido para el despegue:</p>
+        <input type="text" id="nombre-alumno" class="input-estilo" placeholder="Ej: Juan Perez">
+        <div id="alerta-nombre" class="alerta-nombre">⚠️ Problemas para despegar: Usá Mayúsculas al inicio (Ej: Juan Perez)</div>
+        <br><br>
+        <button class="btn-principal" onclick="validarEIniciar()">INICIAR DESPEGUE</button>
+    </div>
+
+    <div id="pantalla-juego" style="display:none;">
+        <p>Piloto: <span id="display-nombre" style="color:var(--neon-blue)"></span> | Progreso: <span id="num-pregunta">1</span>/20</p>
+        <div class="pista-box" id="pista-texto"></div>
+        <div class="pregunta-texto" id="texto-pregunta"></div>
+        <input type="number" id="respuesta-usuario" class="input-estilo" style="width:160px">
+        <div style="margin-top: 25px;">
+            <button class="btn-principal" onclick="procesarRespuesta()">ENVIAR SEÑAL</button>
+        </div>
+    </div>
+
+    <div id="pantalla-final" style="display:none;">
+        <h2>🚀 INFORME FINAL DE MISIÓN</h2>
+        <h3 id="final-nombre" style="color:var(--neon-blue); margin-bottom: 5px;"></h3>
+        <p>Puntaje Final: <span id="valor-nota" style="font-size: 2.5rem; font-weight: bold;"></span></p>
+        <p style="font-size: 0.8rem; color: #888;">Sacá una captura de pantalla de estos resultados:</p>
+        <div class="tabla-resultados" id="repaso-cuentas"></div>
+        <br>
+        <button class="btn-principal" onclick="location.reload()">NUEVA MISIÓN</button>
+    </div>
+</div>
+
+<script>
+    let preguntas = [];
+    let indiceActual = 0;
+    let puntaje = 0;
+    let registro = [];
+    let nombreUsuario = "";
+
+    // Sonido ambiente espacial
+    let audioCtx;
+    function iniciarMusica() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(110, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+        }
+    }
+
+    function validarEIniciar() {
+        let input = document.getElementById('nombre-alumno').value.trim();
+        let regex = /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)+$/;
+        
+        if (regex.test(input)) {
+            nombreUsuario = input;
+            document.getElementById('display-nombre').innerText = nombreUsuario;
+            document.getElementById('pantalla-inicio').style.display = 'none';
+            document.getElementById('pantalla-juego').style.display = 'block';
+            iniciarMusica();
+            generarPreguntasUnicas();
+            mostrarPregunta();
+        } else {
+            document.getElementById('alerta-nombre').style.display = 'block';
+        }
+    }
+
+    function obtenerPista(tabla) {
+        switch(tabla) {
+            case 0: return "💡 La tabla del 0: ¡Todo resultado es 0!";
+            case 1: return "💡 La tabla del 1: El número no cambia.";
+            case 2: return "💡 La tabla del 2: ¡Es el doble del número!";
+            case 3: return "💡 La tabla del 3: Podés sumarlo tres veces.";
+            case 4: return "💡 La tabla del 4: Es el doble de la del 2.";
+            case 5: return "💡 La tabla del 5: Todos terminan en 0 o en 5.";
+            case 6: return "💡 La tabla del 6: ¡Es el doble de la del 3!";
+            case 7: return "💡 La tabla del 7: Podés sumar los resultados de la del 3 y la del 4.";
+            case 8: return "💡 La tabla del 8: Es el doble de la del 4.";
+            case 9: return "💡 La tabla del 9: Es (x10) menos el número, o el triple de la del 3.";
+            case 10: return "💡 La tabla del 10: ¡Solo agregamos un cero al final!";
+            default: return "💡 ¡Usá tus mejores estrategias mentales!";
+        }
+    }
+
+    function generarPreguntasUnicas() {
+        let pool = [];
+        let usadas = new Set();
+
+        function agregar(a, b) {
+            let key = `${a}x${b}`;
+            if (!usadas.has(key)) {
+                pool.push({a, b, pista: obtenerPista(a)});
+                usadas.add(key);
+            }
+        }
+
+        // 1. Obligatorias
+        agregar(0, Math.floor(Math.random()*11));
+        agregar(Math.floor(Math.random()*9)+2, 1);
+        agregar(10, Math.floor(Math.random()*9)+1);
+        agregar(Math.floor(Math.random()*9)+1, 10);
+
+        // 2. Asegurar que aparezcan todas las tablas del 2 al 9 al menos una vez
+        for(let t=2; t<=9; t++) {
+            agregar(t, Math.floor(Math.random()*9)+2);
+        }
+
+        // 3. Completar hasta 20
+        while(pool.length < 20) {
+            agregar(Math.floor(Math.random()*9)+2, Math.floor(Math.random()*9)+2);
+        }
+
+        preguntas = pool.sort(() => Math.random() - 0.5);
+    }
+
+    function mostrarPregunta() {
+        if (indiceActual < 20) {
+            let p = preguntas[indiceActual];
+            document.getElementById('num-pregunta').innerText = indiceActual + 1;
+            document.getElementById('pista-texto').innerText = p.pista;
+            document.getElementById('texto-pregunta').innerText = `${p.a} x ${p.b}`;
+            document.getElementById('respuesta-usuario').value = '';
+            document.getElementById('respuesta-usuario').focus();
+        } else {
+            finalizarJuego();
+        }
+    }
+
+    function procesarRespuesta() {
+        let rU = document.getElementById('respuesta-usuario').value;
+        if (rU === "") return;
+
+        let p = preguntas[indiceActual];
+        let correcta = p.a * p.b;
+        let esOk = parseInt(rU) === correcta;
+        if (esOk) puntaje += 0.5;
+
+        registro.push({
+            txt: `${p.a} x ${p.b}`,
+            user: rU,
+            cor: correcta,
+            ok: esOk
+        });
+
+        document.getElementById('main-container').classList.add('flash');
+        setTimeout(() => document.getElementById('main-container').classList.remove('flash'), 400);
+
+        indiceActual++;
+        setTimeout(mostrarPregunta, 250);
+    }
+
+    function finalizarJuego() {
+        document.getElementById('pantalla-juego').style.display = 'none';
+        document.getElementById('pantalla-final').style.display = 'block';
+        document.getElementById('final-nombre').innerText = `CADETE: ${nombreUsuario}`;
+        document.getElementById('valor-nota').innerText = puntaje.toFixed(1);
+        document.getElementById('valor-nota').style.color = puntaje >= 6 ? 'var(--correct-green)' : 'var(--error-orange)';
+
+        let tabla = document.getElementById('repaso-cuentas');
+        registro.forEach(item => {
+            let div = document.createElement('div');
+            div.className = `item-res ${item.ok ? 'acierto' : 'error'}`;
+            div.innerHTML = `${item.ok ? '🚀' : '👾'} ${item.txt} = ${item.user} ${item.ok ? '' : '(Correcto: '+item.cor+')'}`;
+            tabla.appendChild(div);
+        });
+if (puntaje === 10) {
+    let felicitacion = document.createElement('div');
+    felicitacion.innerHTML = "<h3>¡MISIÓN EXITOSA: ENCONTRAMOS VIDA! 👩‍🚀👨‍🚀👽</h3>";
+    felicitacion.style.color = "var(--neon-blue)";
+    document.getElementById('pantalla-final').prepend(felicitacion);
+    
+    // AQUÍ SE ACTIVA EL EFECTO
+    lluviaDeMarcianos(); 
+}
+    }
+
+    // Estrellas de fondo
+    const canvas = document.getElementById('canvasEstrellas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const estrellas = Array(150).fill().map(() => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2,
+        v: Math.random() * 0.5 + 0.1
+    }));
+
+    function animar() {
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        estrellas.forEach(e => {
+            ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill();
+            e.y += e.v; if(e.y > canvas.height) e.y = 0;
+        });
+        requestAnimationFrame(animar);
+    }
+    animar();
+
+    document.getElementById("respuesta-usuario").addEventListener("keyup", (e) => {
+        if (e.key === "Enter") procesarRespuesta();
+    });
+
+function lluviaDeMarcianos() {
+    for (let i = 0; i < 15; i++) {
+        setTimeout(() => {
+            let m = document.createElement('div');
+            m.className = 'marciano-animado';
+            m.innerText = '👾';
+            m.style.left = Math.random() * 100 + "vw";
+            m.style.animationDuration = (Math.random() * 3 + 2) + "s";
+            document.body.appendChild(m);
+            // Se eliminan solos después de la animación para no trabar la PC
+            setTimeout(() => m.remove(), 5000);
+        }, i * 300);
+    }
+}
+</script>
+
+</body>
+</html>

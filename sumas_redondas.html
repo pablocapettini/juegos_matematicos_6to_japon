@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío Numérico: 10 Rondas</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e67e22;
+            --equipo1: #3498db;
+            --equipo2: #e74c3c;
+            --success: #27ae60;
+            --bg: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            align-items: center;
+        }
+
+        #pantalla-juego, #pantalla-inicio, #pantalla-desempate, #pantalla-final {
+            width: 95%;
+            max-width: 800px;
+            background: white;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .oculto { display: none !important; }
+
+        .clave-box {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .ronda-info { font-weight: bold; color: var(--accent); margin-bottom: 10px; }
+
+        .cartas-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .carta {
+            padding: 15px 5px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .carta:hover { background: #dfe6e9; }
+        .carta.seleccionada { background: var(--success); color: white; border-color: #1e8449; }
+        .carta:disabled { opacity: 0.3; cursor: not-allowed; background: #eee; }
+
+        .btn-accion {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            background: var(--primary);
+            color: white;
+            transition: 0.3s;
+        }
+
+        .btn-accion:hover { transform: scale(1.05); }
+
+        .turno-titulo { font-size: 1.5rem; margin-bottom: 15px; padding: 10px; border-radius: 5px; }
+        .bg-e1 { background: var(--equipo1); color: white; }
+        .bg-e2 { background: var(--equipo2); color: white; }
+
+        #marcador {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: auto;
+            padding: 10px;
+            background: var(--primary);
+            color: white;
+        }
+
+        .operacion-desempate { font-size: 4rem; margin: 40px 0; color: #d35400; }
+    </style>
+</head>
+<body>
+
+<div id="pantalla-inicio">
+    <h1>🔢 El Número Clave: Edición Extrema</h1>
+    <p>10 Rondas • Claves hasta 1000 • Juegan dos equipos</p>
+    <button class="btn-accion" onclick="iniciarJuego()">EMPEZAR PARTIDA</button>
+</div>
+
+<div id="pantalla-juego" class="oculto">
+    <div class="ronda-info" id="txt-ronda">Ronda 1 / 10</div>
+    <div class="clave-box">OBJETIVO: <span id="val-clave">0</span></div>
+    
+    <div id="zona-espera">
+        <h2 id="txt-turno-espera">Turno del Equipo 1</h2>
+        <p>Los demás no miren la pantalla...</p>
+        <button class="btn-accion" onclick="mostrarCartas()">VER MIS CARTAS</button>
+    </div>
+
+    <div id="zona-cartas" class="oculto">
+        <div id="header-turno" class="turno-titulo"></div>
+        <p>Elige 3 cartas que sumen el objetivo (o lo más cerca posible):</p>
+        <div class="cartas-container" id="contenedor-cartas"></div>
+        <button class="btn-accion" id="btn-confirmar" onclick="confirmarSeleccion()">CONFIRMAR SELECCIÓN</button>
+    </div>
+</div>
+
+<div id="pantalla-final" class="oculto">
+    <h1>FIN DEL JUEGO</h1>
+    <h2 id="ganador-final"></h2>
+    <div id="puntos-finales"></div>
+    <br>
+    <button id="btn-desempate" class="btn-accion oculto" onclick="irADesempate()" style="background:#8e44ad">¡IR A DESEMPATE!</button>
+    <button class="btn-accion" onclick="location.reload()">REINICIAR</button>
+</div>
+
+<div id="pantalla-desempate" class="oculto">
+    <h2>⚡ DESEMPATE RELÁMPAGO ⚡</h2>
+    <p>El primero que diga el resultado en voz alta gana la partida.</p>
+    <div class="operacion-desempate" id="op-desempate"></div>
+    <button class="btn-accion" onclick="location.reload()">FINALIZAR</button>
+</div>
+
+<div id="marcador" class="oculto">
+    <div>Equipo 1: <span id="pts-e1">0</span> pts</div>
+    <div>Equipo 2: <span id="pts-e2">0</span> pts</div>
+</div>
+
+<script>
+    let ronda = 1;
+    let equipoActual = 1;
+    let clave = 0;
+    let mazoE1 = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    let mazoE2 = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    let seleccionActual = [];
+    let sumasRonda = { e1: 0, e2: 0 };
+    let puntos = { e1: 0, e2: 0 };
+
+    function iniciarJuego() {
+        document.getElementById('pantalla-inicio').classList.add('oculto');
+        document.getElementById('pantalla-juego').classList.remove('oculto');
+        document.getElementById('marcador').classList.remove('oculto');
+        prepararRonda();
+    }
+
+    function prepararRonda() {
+        // La dificultad aumenta: Ronda 1 (~100), Ronda 10 (~1000)
+        let min = ronda * 80;
+        let max = ronda * 110;
+        clave = Math.floor(Math.random() * (max - min + 1) + min);
+        document.getElementById('val-clave').innerText = clave;
+        document.getElementById('txt-ronda').innerText = `Ronda ${ronda} / 10`;
+        irATurno(1);
+    }
+
+    function irATurno(numEquipo) {
+        equipoActual = numEquipo;
+        seleccionActual = [];
+        document.getElementById('zona-espera').classList.remove('oculto');
+        document.getElementById('zona-cartas').classList.add('oculto');
+        document.getElementById('txt-turno-espera').innerText = `Turno del Equipo ${numEquipo}`;
+        document.getElementById('txt-turno-espera').className = numEquipo === 1 ? 'bg-e1' : 'bg-e2';
+    }
+
+    function mostrarCartas() {
+        document.getElementById('zona-espera').classList.add('oculto');
+        const zonaCartas = document.getElementById('zona-cartas');
+        zonaCartas.classList.remove('oculto');
+        
+        const header = document.getElementById('header-turno');
+        header.innerText = `Equipo ${equipoActual}`;
+        header.className = 'turno-titulo ' + (equipoActual === 1 ? 'bg-e1' : 'bg-e2');
+
+        renderizarCartas();
+    }
+
+    function renderizarCartas() {
+        const contenedor = document.getElementById('contenedor-cartas');
+        contenedor.innerHTML = '';
+        const mazo = equipoActual === 1 ? mazoE1 : mazoE2;
+
+        mazo.forEach((valor, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'carta';
+            btn.innerText = valor;
+            btn.onclick = () => togglerCarta(valor, btn);
+            contenedor.appendChild(btn);
+        });
+    }
+
+    function togglerCarta(valor, btn) {
+        const idx = seleccionActual.indexOf(valor);
+        if (idx > -1) {
+            seleccionActual.splice(idx, 1);
+            btn.classList.remove('seleccionada');
+        } else if (seleccionActual.length < 3) {
+            seleccionActual.push(valor);
+            btn.classList.add('seleccionada');
+        }
+    }
+
+    function confirmarSeleccion() {
+        if (seleccionActual.length < 3) {
+            alert("Debes elegir exactamente 3 cartas.");
+            return;
+        }
+
+        const suma = seleccionActual.reduce((a, b) => a + b, 0);
+        if (equipoActual === 1) {
+            sumasRonda.e1 = suma;
+            // Reemplazar cartas usadas por números más altos
+            mazoE1 = mazoE1.filter(v => !seleccionActual.includes(v));
+            while(mazoE1.length < 10) mazoE1.push(Math.max(...mazoE1) + 20);
+            mazoE1.sort((a,b) => a-b);
+            irATurno(2);
+        } else {
+            sumasRonda.e2 = suma;
+            mazoE2 = mazoE2.filter(v => !seleccionActual.includes(v));
+            while(mazoE2.length < 10) mazoE2.push(Math.max(...mazoE2) + 20);
+            mazoE2.sort((a,b) => a-b);
+            finalizarRonda();
+        }
+    }
+
+    function finalizarRonda() {
+        const diffE1 = Math.abs(clave - sumasRonda.e1);
+        const diffE2 = Math.abs(clave - sumasRonda.e2);
+
+        let mensaje = "";
+        if (diffE1 < diffE2) {
+            puntos.e1++;
+            mensaje = "Punto para el Equipo 1 (más cerca)";
+        } else if (diffE2 < diffE1) {
+            puntos.e2++;
+            mensaje = "Punto para el Equipo 2 (más cerca)";
+        } else {
+            puntos.e1++; puntos.e2++;
+            mensaje = "¡Empate! Punto para ambos";
+        }
+
+        alert(`Resultados Ronda ${ronda}:\nClave: ${clave}\nEquipo 1 sumó: ${sumasRonda.e1}\nEquipo 2 sumó: ${sumasRonda.e2}\n\n${mensaje}`);
+        
+        document.getElementById('pts-e1').innerText = puntos.e1;
+        document.getElementById('pts-e2').innerText = puntos.e2;
+
+        if (ronda < 10) {
+            ronda++;
+            prepararRonda();
+        } else {
+            mostrarFinal();
+        }
+    }
+
+    function mostrarFinal() {
+        document.getElementById('pantalla-juego').classList.add('oculto');
+        document.getElementById('pantalla-final').classList.remove('oculto');
+        
+        let resultadoTxt = "";
+        if (puntos.e1 > puntos.e2) {
+            resultadoTxt = "¡GANADOR EQUIPO 1!";
+        } else if (puntos.e2 > puntos.e1) {
+            resultadoTxt = "¡GANADOR EQUIPO 2!";
+        } else {
+            resultadoTxt = "¡EMPATE TOTAL!";
+            document.getElementById('btn-desempate').classList.remove('oculto');
+        }
+        
+        document.getElementById('ganador-final').innerText = resultadoTxt;
+        document.getElementById('puntos-finales').innerText = `Marcador final: ${puntos.e1} a ${puntos.e2}`;
+    }
+
+    function irADesempate() {
+        document.getElementById('pantalla-final').classList.add('oculto');
+        document.getElementById('pantalla-desempate').classList.remove('oculto');
+        const n1 = Math.floor(Math.random() * 500) + 100;
+        const n2 = Math.floor(Math.random() * 500) + 100;
+        document.getElementById('op-desempate').innerText = `${n1} + ${n2}`;
+    }
+</script>
+
+</body>
+</html>

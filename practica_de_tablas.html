@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío de Multiplicación</title>
+    <style>
+        :root {
+            --naranja: #FF851B;
+            --azul: #0074D9;
+            --azul-oscuro: #001f3f;
+            --blanco: #FFFFFF;
+            --fondo: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Helvetica', sans-serif;
+            background-color: var(--fondo);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--blanco);
+            border: 8px solid var(--azul);
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 15px 0 var(--azul-oscuro);
+        }
+
+        .header {
+            color: var(--azul);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pregunta {
+            font-size: 5rem;
+            color: var(--naranja);
+            margin: 20px 0;
+            text-shadow: 3px 3px 0px #eee;
+        }
+
+        .opciones {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-opcion {
+            background-color: var(--azul);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 20px 10px;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+            box-shadow: 0 6px 0 #0056b3;
+        }
+
+        .btn-opcion:hover {
+            background-color: #0088ff;
+        }
+
+        .btn-opcion:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0056b3;
+        }
+
+        .ayuda-container {
+            margin-top: 30px;
+            height: 60px;
+        }
+
+        .btn-ayuda {
+            background-color: var(--naranja);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #e65100;
+        }
+
+        #pista-texto {
+            display: none;
+            margin-top: 10px;
+            font-size: 1.3rem;
+            color: #d35400;
+            background: #fff3e0;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .feedback {
+            position: fixed;
+            top: 20%;
+            font-size: 4rem;
+            font-weight: bold;
+            display: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feedback" id="feedback"></div>
+
+<div class="game-container">
+    <div class="header">
+        <span>Puntos: <strong id="puntos">0</strong></span>
+        <span>Racha: <strong id="racha">0</strong></span>
+    </div>
+
+    <div class="pregunta" id="pregunta">7 x 8</div>
+
+    <div class="opciones" id="opciones-grid">
+        </div>
+
+    <div class="ayuda-container">
+        <button class="btn-ayuda" onclick="mostrarAyuda()">💡 ¿UNA PISTA?</button>
+        <div id="pista-texto"></div>
+    </div>
+</div>
+
+<script>
+    let puntos = 0;
+    let racha = 0;
+    let numA, numB, resultadoCorrecto;
+
+    function generarPregunta() {
+        // Generar números entre 2 y 10 para que no sea tan aburrido con el 1
+        numA = Math.floor(Math.random() * 9) + 2;
+        numB = Math.floor(Math.random() * 9) + 2;
+        resultadoCorrecto = numA * numB;
+
+        document.getElementById('pregunta').innerText = `${numA} x ${numB}`;
+        document.getElementById('pista-texto').style.display = 'none';
+        
+        let opciones = [resultadoCorrecto];
+        
+        // Generar opciones falsas creíbles
+        while (opciones.length < 3) {
+            let falso = (numA + (Math.random() > 0.5 ? 1 : -1)) * numB;
+            if (falso !== resultadoCorrecto && falso > 0 && !opciones.includes(falso)) {
+                opciones.push(falso);
+            } else {
+                let aleatorio = Math.floor(Math.random() * 100) + 1;
+                if (!opciones.includes(aleatorio)) opciones.push(aleatorio);
+            }
+        }
+
+        // Mezclar opciones
+        opciones.sort(() => Math.random() - 0.5);
+
+        const grid = document.getElementById('opciones-grid');
+        grid.innerHTML = '';
+        opciones.forEach(op => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-opcion';
+            btn.innerText = op;
+            btn.onclick = () => verificar(op);
+            grid.appendChild(btn);
+        });
+    }
+
+    function verificar(elegido) {
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = 'block';
+
+        if (elegido === resultadoCorrecto) {
+            puntos += 10;
+            racha++;
+            feedback.innerText = "✅ ¡SÍ!";
+            feedback.style.color = "#27ae60";
+            setTimeout(() => {
+                feedback.style.display = 'none';
+                generarPregunta();
+            }, 600);
+        } else {
+            racha = 0;
+            feedback.innerText = "❌ ¡OH NO!";
+            feedback.style.color = "#c0392b";
+            setTimeout(() => feedback.style.display = 'none', 600);
+        }
+
+        document.getElementById('puntos').innerText = puntos;
+        document.getElementById('racha').innerText = racha;
+    }
+
+    function mostrarAyuda() {
+        const pista = document.getElementById('pista-texto');
+        if (numB > 1) {
+            pista.innerText = `Pista: ${numA} x ${numB - 1} = ${numA * (numB - 1)}`;
+        } else {
+            pista.innerText = `Pista: Cualquier número por 1 es el mismo número.`;
+        }
+        pista.style.display = 'block';
+    }
+
+    // Iniciar
+    generarPregunta();
+</script>
+
+</body>
+</html>
